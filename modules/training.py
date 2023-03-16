@@ -125,7 +125,7 @@ def runTraining(self):
                 #sta sopravvivendo, 1 punto di reward
                 reward += 1
                 next_state = numpy.reshape(self.projectSegments(), [1,state_size,2])
-                if self.isAgentLookingAtObjective:
+                if self.is_looking_at_object:
                     reward += 3
                     newDistToObjective = self.pointPointDistance((self.agent.x, self.agent.y), (self.objective.x, self.objective.y))
                     if newDistToObjective < distToObjective:
