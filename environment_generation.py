@@ -10,7 +10,9 @@ from utils import Check_Collisions, Agent, Vertex, Room, Game_Object
 
 class Environment_Generation:
     """Class to generate environment"""
+
     def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
+        self.type_to_sprite = None
         self.env_width = env_width * multiplier
         self.env_height = env_height * multiplier
         self.multiplier = multiplier
@@ -30,8 +32,8 @@ class Environment_Generation:
         for solution in self.prolog.query(prolog_query):
             print("CLPR loaded.")
 
-    def generate_environment(self, bathroomNumber, bedroomNumber, kitchenNumber, hallNumber):
-        self.generate_rooms_doors(bathroomNumber, bedroomNumber, kitchenNumber, hallNumber)
+    def generate_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
+        self.generate_rooms_doors(bathroom_no, bedroom_no, kitchen_no, hall_no)
         for bathroom in self.get_rooms(flag='bathroom'):
             self.populate_bathroom(bathroom, random.randint(0, 1), random.randint(0, 1), random.randint(0, 1))
         for bedroom in self.get_rooms(flag='bedroom'):
@@ -200,7 +202,6 @@ class Environment_Generation:
                 running = False
                 print(f"score achieved: {str(score)}")
         pygame.display.quit()
-        # pygame.quit()
 
     def reset_objective(self):
         random_next_x = self.objective.sprite.rect.x
@@ -240,6 +241,7 @@ class Environment_Generation:
                                    desk=pygame.image.load('textures/desk_texture.png').convert_alpha(),
                                    sink=pygame.image.load('textures/sink_texture.png').convert_alpha(),
                                    wardrobe=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
+                                   cupboard=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
                                    floor=pygame.image.load('textures/floor_texture.png').convert_alpha(),
                                    agent=pygame.image.load('textures/agent_texture_mockup.png').convert_alpha(),
                                    objective=pygame.image.load('textures/objective_texture_mockup.png').convert_alpha())
@@ -2069,6 +2071,70 @@ class Environment_Generation:
                     table.children.append(chair)
                 hall.children.append(table)
         self.prolog.retract(predicate_head + predicate_body)
+
+    def project_segments(self):
+        angle_range = 120
+        step = 3
+        eye_point = self.agent.sprite.rect.center
+        slope = (self.agent.targetRot + angle_range / 2) % 360
+        points = []
+
+        for i in range(0, angle_range, step):
+            is_agent_looking_at_objective = False
+            x = math.cos(math.radians(slope)) * 220
+            y = math.sin(math.radians(slope)) * 220
+            view_point = (eye_point[0] + x, eye_point[1] - y)
+            slope = (slope - step) % 360
+            intersection_points = []
+            intersection_points_distances = []
+
+            for room in self.rooms:
+                intersection_point = self.checker.check_line_room_collision((eye_point[0], eye_point[1], view_point[0],
+                                                                             view_point[1]), room)
+                if intersection_point is not None:
+                    intersection_points.append(intersection_point)
+                for room_child in room.children:
+                    intersection_point = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                 view_point[0], view_point[1]),
+                                                                                room_child.sprite.rect)
+                    if intersection_point is not None:
+                        intersection_points.append(intersection_point)
+                    for child in room_child.children:
+                        intersection_point = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                     view_point[0], view_point[1]),
+                                                                                    child.sprite.rect)
+                        if intersection_point is not None:
+                            intersection_points.append(intersection_point)
+            intersection_point_floor = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                               view_point[0], view_point[1]),
+                                                                              self.floor.sprite.rect)
+            if intersection_point_floor is not None:
+                any_room_contains_point = False
+                for room in self.rooms:
+                    if self.checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
+                        any_room_contains_point = True
+                        break
+                if not any_room_contains_point:
+                    intersection_points.append(intersection_point_floor)
+            intersection_point_objective = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                 view_point[0], view_point[1]),
+                                                                                self.objective.sprite.rect)
+            if intersection_point_objective is not None:
+                intersection_points.append(intersection_point_objective)
+            for point in intersection_points:
+                intersection_points_distances.append(self.checker.point_point_distance(eye_point, point))
+            if len(intersection_points) > 0:
+                chosen_index = np.argmin(intersection_points_distances)
+                chosen_point = intersection_points[chosen_index]
+                if chosen_point == intersection_point_objective:
+                    is_agent_looking_at_objective = True
+
+                points.append((slope / 359, intersection_points_distances[chosen_index] / 220,
+                               is_agent_looking_at_objective))
+            else:
+                points.append((slope / 359, 1, False))
+
+        return points, is_agent_looking_at_objective
 
     def save_generated_model(self):
         serialized_floor = dict(x=self.floor.x, y=self.floor.y, width=self.floor.width, height=self.floor.height)

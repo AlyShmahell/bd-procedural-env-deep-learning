@@ -7,13 +7,16 @@ from guizero import App, ListBox, PushButton, Box, Text, info, Slider
 from environment_generation import Environment_Generation
 from os import listdir
 from os.path import isfile, join
+from training import Training
 
 
 class Guizero:
     """A simple and intuitive interface to create graphical user interfaces (GUIs)
     prova"""
-    def __init__(self, environment):
-        self.environment = environment
+    def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
+        self.environment = Environment_Generation(env_width, env_height, multiplier, fake_collision_mt,
+                                                  door_fake_collision_mt)
+        self.training = Training(env_width, env_height, multiplier, self.environment)
         self.green = (0, 255, 0)
         self.orange = (255, 200, 140)
         self.pink = (255, 210, 210)
@@ -104,7 +107,7 @@ class Guizero:
 
         Box(self.train_box_view, height=40, width=50, grid=[0, 0])
         view_button_box2 = Box(self.train_box_view, layout="grid", grid=[0, 2])
-        # PushButton(view_button_box2, command=self.train_cmd, text="Train", grid=[0, 0])
+        PushButton(view_button_box2, command=self.train_cmd, text="Train", grid=[0, 0])
         PushButton(view_button_box2, command=self.view_train_back_cmd, text="Back", grid=[1, 0])
 
         self.app.display()
@@ -125,7 +128,7 @@ class Guizero:
         self.train_box_view.show()
 
     def view_cmd(self):
-        self.environment.loadModel(self.listbox.value)
+        self.training.load_model(self.listbox.value)
         self.environment.draw_model()
         self.environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
                                              self.sliderHA.value)
@@ -152,9 +155,9 @@ class Guizero:
         self.environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
                                              self.sliderHA.value, mode="generate")
 
-    # def train_cmd(self):
-    #     self.environment.loadModel(self.listbox2.value)
-    #     self.environment.runTraining()
+    def train_cmd(self):
+        self.training.load_model(self.listbox2.value)
+        self.training.run_training()
 
     def view_train_back_cmd(self):
         self.train_box_view.hide()
@@ -162,5 +165,5 @@ class Guizero:
 
 
 if __name__ == "__main__":
-    my_env = Environment_Generation(15.0, 15.0, 8.5, 2.5, 1.5)
-    Guizero(my_env)
+    #my_env = Environment_Generation(15.0, 15.0, 8.5, 2.5, 1.5)
+    Guizero(15.0, 15.0, 8.5, 2.5, 1.5)
