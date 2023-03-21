@@ -104,99 +104,7 @@ class Environment_Generation:
                     self.reset()
             if not running:
                 break
-            pressed = pygame.key.get_pressed()
-            if pressed[pygame.K_s] and mode == "generate":
-                self.save_generated_model()
-                self.reset()
-                self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
-                                          hall_no)
-                self.draw_model()
-            if pressed[pygame.K_n] and mode == "generate":
-                self.reset()
-                self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
-                                          hall_no)
-                self.draw_model()
-            if pressed[pygame.K_UP] and pressed[pygame.K_RIGHT]:
-                self._agent.targetRot = 45
-                self._agent.x += 2
-                self._agent.y -= 2
-            elif pressed[pygame.K_UP] and pressed[pygame.K_LEFT]:
-                self._agent.targetRot = 135
-                self._agent.x -= 2
-                self._agent.y -= 2
-            elif pressed[pygame.K_DOWN] and pressed[pygame.K_RIGHT]:
-                self._agent.targetRot = 315
-                self._agent.x += 2
-                self._agent.y += 2
-            elif pressed[pygame.K_DOWN] and pressed[pygame.K_LEFT]:
-                self._agent.targetRot = 225
-                self._agent.x -= 2
-                self._agent.y += 2
-            elif pressed[pygame.K_UP]:
-                self._agent.targetRot = 90
-                self._agent.y -= 2
-            elif pressed[pygame.K_DOWN]:
-                self._agent.targetRot = 270
-                self._agent.y += 2
-            elif pressed[pygame.K_LEFT]:
-                self._agent.targetRot = 180
-                self._agent.x -= 2
-            elif pressed[pygame.K_RIGHT]:
-                self._agent.targetRot = 0
-                self._agent.x += 2
-
-            elif pressed[pygame.K_SPACE]:
-                angle_range = 120
-                step = 3
-                eye_point = self._agent.sprite.rect.center
-                slope = (self._agent.targetRot + angle_range / 2) % 360
-                test_distances = []
-                for i in range(0, angle_range, step):
-                    x = math.cos(math.radians(slope)) * 220
-                    y = math.sin(math.radians(slope)) * 220
-                    view_point = (eye_point[0] + x, eye_point[1] - y)
-                    slope = (slope - step) % 360
-                    intersection_points = []
-                    intersection_points_distances = []
-                    for room in self._rooms:
-                        intersection_point = self._checker.check_line_room_collision(
-                            (eye_point[0], eye_point[1], view_point[0], view_point[1]), room)
-                        if intersection_point is not None:
-                            intersection_points.append(intersection_point)
-                        for room_child in room.children:
-                            intersection_point = self._checker.check_line_rect_collision(
-                                (eye_point[0], eye_point[1], view_point[0], view_point[1]), room_child.sprite.rect)
-                            if intersection_point is not None:
-                                intersection_points.append(intersection_point)
-                            for child in room_child.children:
-                                intersection_point = self._checker.check_line_rect_collision(
-                                    (eye_point[0], eye_point[1], view_point[0], view_point[1]), child.sprite.rect)
-                                if intersection_point is not None:
-                                    intersection_points.append(intersection_point)
-                    intersection_point_floor = self._checker.check_line_rect_collision(
-                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._floor.sprite.rect)
-                    if intersection_point_floor is not None:
-                        any_room_contains_point = False
-                        for room in self._rooms:
-                            if self._checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
-                                any_room_contains_point = True
-                                break
-                        if not any_room_contains_point:
-                            intersection_points.append(intersection_point_floor)
-                    intersection_point_objective = self._checker.check_line_rect_collision(
-                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._objective.sprite.rect)
-                    if intersection_point_objective is not None:
-                        intersection_points.append(intersection_point_objective)
-                    for point in intersection_points:
-                        intersection_points_distances.append(self._checker.point_point_distance(eye_point, point))
-                    if len(intersection_points) > 0:
-                        test_distances.append(min(intersection_points_distances) / 220)
-                        chosen_index = np.argmin(intersection_points_distances)
-                        chosen_point = intersection_points[chosen_index]
-                        if 10 <= i / step <= 30:
-                            pygame.draw.circle(self.screen, (255, 0, 0), chosen_point, 2)
-                if min(test_distances) < 0.049:
-                    print("activation avoidance")
+            self.react_to_keys(bathroom_no, bedroom_no, hall_no, kitchen_no, mode)
             if self._agent.sprite.rect.colliderect(self._objective.sprite.rect):
                 self.reset_objective()
                 score += 1
@@ -207,6 +115,101 @@ class Environment_Generation:
                 running = False
                 print(f"score achieved: {str(score)}")
         pygame.display.quit()
+
+    def react_to_keys(self, bathroom_no, bedroom_no, hall_no, kitchen_no, mode):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_s] and mode == "generate":
+            self.save_generated_model()
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
+                                      hall_no)
+            self.draw_model()
+        if pressed[pygame.K_n] and mode == "generate":
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
+                                      hall_no)
+            self.draw_model()
+        if pressed[pygame.K_UP] and pressed[pygame.K_RIGHT]:
+            self._agent.targetRot = 45
+            self._agent.x += 2
+            self._agent.y -= 2
+        elif pressed[pygame.K_UP] and pressed[pygame.K_LEFT]:
+            self._agent.targetRot = 135
+            self._agent.x -= 2
+            self._agent.y -= 2
+        elif pressed[pygame.K_DOWN] and pressed[pygame.K_RIGHT]:
+            self._agent.targetRot = 315
+            self._agent.x += 2
+            self._agent.y += 2
+        elif pressed[pygame.K_DOWN] and pressed[pygame.K_LEFT]:
+            self._agent.targetRot = 225
+            self._agent.x -= 2
+            self._agent.y += 2
+        elif pressed[pygame.K_UP]:
+            self._agent.targetRot = 90
+            self._agent.y -= 2
+        elif pressed[pygame.K_DOWN]:
+            self._agent.targetRot = 270
+            self._agent.y += 2
+        elif pressed[pygame.K_LEFT]:
+            self._agent.targetRot = 180
+            self._agent.x -= 2
+        elif pressed[pygame.K_RIGHT]:
+            self._agent.targetRot = 0
+            self._agent.x += 2
+
+        elif pressed[pygame.K_SPACE]:
+            angle_range = 120
+            step = 3
+            eye_point = self._agent.sprite.rect.center
+            slope = (self._agent.targetRot + angle_range / 2) % 360
+            test_distances = []
+            for i in range(0, angle_range, step):
+                x = math.cos(math.radians(slope)) * 220
+                y = math.sin(math.radians(slope)) * 220
+                view_point = (eye_point[0] + x, eye_point[1] - y)
+                slope = (slope - step) % 360
+                intersection_points = []
+                intersection_points_distances = []
+                for room in self._rooms:
+                    intersection_point = self._checker.check_line_room_collision(
+                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), room)
+                    if intersection_point is not None:
+                        intersection_points.append(intersection_point)
+                    for room_child in room.children:
+                        intersection_point = self._checker.check_line_rect_collision(
+                            (eye_point[0], eye_point[1], view_point[0], view_point[1]), room_child.sprite.rect)
+                        if intersection_point is not None:
+                            intersection_points.append(intersection_point)
+                        for child in room_child.children:
+                            intersection_point = self._checker.check_line_rect_collision(
+                                (eye_point[0], eye_point[1], view_point[0], view_point[1]), child.sprite.rect)
+                            if intersection_point is not None:
+                                intersection_points.append(intersection_point)
+                intersection_point_floor = self._checker.check_line_rect_collision(
+                    (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._floor.sprite.rect)
+                if intersection_point_floor is not None:
+                    any_room_contains_point = False
+                    for room in self._rooms:
+                        if self._checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
+                            any_room_contains_point = True
+                            break
+                    if not any_room_contains_point:
+                        intersection_points.append(intersection_point_floor)
+                intersection_point_objective = self._checker.check_line_rect_collision(
+                    (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._objective.sprite.rect)
+                if intersection_point_objective is not None:
+                    intersection_points.append(intersection_point_objective)
+                for point in intersection_points:
+                    intersection_points_distances.append(self._checker.point_point_distance(eye_point, point))
+                if len(intersection_points) > 0:
+                    test_distances.append(min(intersection_points_distances) / 220)
+                    chosen_index = np.argmin(intersection_points_distances)
+                    chosen_point = intersection_points[chosen_index]
+                    if 10 <= i / step <= 30:
+                        pygame.draw.circle(self.screen, (255, 0, 0), chosen_point, 2)
+            if test_distances and min(test_distances) < 0.049:
+                print("activation avoidance")
 
     def reset_objective(self):
         random_next_x = self._objective.sprite.rect.x
