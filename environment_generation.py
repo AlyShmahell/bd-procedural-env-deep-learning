@@ -26,7 +26,7 @@ class Environment_Generation:
         self._objective_position = [(270, 190), (250, 325), (110, 290), (160, 170), (160, 240), (220, 240), (230, 280),
                                     (170, 320)]
         self._rooms = []
-
+        self._screen = None
         prolog_query = "use_module(library(clpr))"
 
         for solution in self._prolog.query(prolog_query):
@@ -45,8 +45,8 @@ class Environment_Generation:
 
     def draw_model(self):
         if len(self._rooms) > 1:
-            self.screen.blit(self._floor.sprite.image, self._floor.sprite.rect)
-            pygame.draw.rect(self.screen, (255, 255, 255), self._floor.sprite.rect, 2)
+            self._screen.blit(self._floor.sprite.image, self._floor.sprite.rect)
+            pygame.draw.rect(self._screen, (255, 255, 255), self._floor.sprite.rect, 2)
         self.draw_rooms()
         self.draw_agent_and_target()
 
@@ -59,29 +59,29 @@ class Environment_Generation:
             self._agent.rot = self._agent.targetRot
         self._agent.sprite.rect.x = self._agent.x
         self._agent.sprite.rect.y = self._agent.y
-        self.screen.blit(self._agent.image, self._agent.sprite.rect)
-        self.screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
+        self._screen.blit(self._agent.image, self._agent.sprite.rect)
+        self._screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
 
     def draw_rooms(self):
         for room in self._rooms:
-            self.screen.blit(room.sprite.image, room.sprite.rect)
-            pygame.draw.rect(self.screen, (255, 255, 255), room.sprite.rect, 2)
+            self._screen.blit(room.sprite.image, room.sprite.rect)
+            pygame.draw.rect(self._screen, (255, 255, 255), room.sprite.rect, 2)
 
             if room.door.width == 0:
                 blitRect = pygame.Rect(room.door.x - 0.5 * self._multiplier, room.door.y, 1.0 * self._multiplier,
                                        room.door.height)
-                self.screen.blit(room.door.sprite.image, blitRect)
+                self._screen.blit(room.door.sprite.image, blitRect)
                 room.door.sprite.rect = blitRect
             else:
                 blitRect = pygame.Rect(room.door.x, room.door.y - 0.5 * self._multiplier, room.door.width,
                                        1.0 * self._multiplier)
-                self.screen.blit(room.door.sprite.image, blitRect)
+                self._screen.blit(room.door.sprite.image, blitRect)
                 room.door.sprite.rect = blitRect
 
             for room_child in room.children:
-                self.screen.blit(room_child.sprite.image, room_child.sprite.rect)
+                self._screen.blit(room_child.sprite.image, room_child.sprite.rect)
                 for child in room_child.children:
-                    self.screen.blit(child.sprite.image, child.sprite.rect)
+                    self._screen.blit(child.sprite.image, child.sprite.rect)
 
     def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no, mode='view'):
         running = True
@@ -91,7 +91,7 @@ class Environment_Generation:
         frames = 1500
         score = 0
         while running:
-            self.screen.fill((30, 30, 30))
+            self._screen.fill((30, 30, 30))
             self.draw_model()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -104,7 +104,9 @@ class Environment_Generation:
                     self.reset()
             if not running:
                 break
-            self.react_to_keys(bathroom_no, bedroom_no, hall_no, kitchen_no, mode)
+            # self.react_to_keys(bathroom_no, bedroom_no, hall_no, kitchen_no, mode)
+            pressed = pygame.key.get_pressed()
+            self.simple_react_to_keys(pressed, bathroom_no, bedroom_no, hall_no, kitchen_no, mode)
             if self._agent.sprite.rect.colliderect(self._objective.sprite.rect):
                 self.reset_objective()
                 score += 1
@@ -116,7 +118,7 @@ class Environment_Generation:
                 print(f"score achieved: {str(score)}")
         pygame.display.quit()
 
-    def react_to_keys(self, bathroom_no, bedroom_no, hall_no, kitchen_no, mode):
+    def old_react_to_keys(self, bathroom_no, bedroom_no, hall_no, kitchen_no, mode):
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_s] and mode == "generate":
             self.save_generated_model()
@@ -207,9 +209,20 @@ class Environment_Generation:
                     chosen_index = np.argmin(intersection_points_distances)
                     chosen_point = intersection_points[chosen_index]
                     if 10 <= i / step <= 30:
-                        pygame.draw.circle(self.screen, (255, 0, 0), chosen_point, 2)
+                        pygame.draw.circle(self._screen, (255, 0, 0), chosen_point, 2)
             if test_distances and min(test_distances) < 0.049:
                 print("activation avoidance")
+
+    def simple_react_to_keys(self, pressed, bathroom_no, bedroom_no, hall_no, kitchen_no, mode):
+        if pressed[pygame.K_s] and mode == "generate":
+            self.save_generated_model()
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no, hall_no)
+            self.draw_model()
+        if pressed[pygame.K_n] and mode == "generate":
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no, hall_no)
+            self.draw_model()
 
     def reset_objective(self):
         random_next_x = self._objective.sprite.rect.x
@@ -232,140 +245,16 @@ class Environment_Generation:
         room_distance_threshold = 10.0 + 3 * room_number
         self._env_width = self._env_width + (8.0 * room_number * self._multiplier)
         self._env_height = self._env_height + (8.0 * room_number * self._multiplier)
-        self.screen = pygame.display.set_mode((int(self._env_width), int(self._env_height)))
+        self._screen = pygame.display.set_mode((int(self._env_width), int(self._env_height)))
         self.makes_sprites()
 
-        head_variables = ""
-        predicate_head = "generateEnvironment(EnvWidth, EnvHeight, "
-        query_start = "generateEnvironment(" + str(self._env_width) + ", " + str(self._env_height) + ", "
-        for i in range(0, room_number):
-            head_variables += "R" + str(i) + "X" + ", "
-            head_variables += "R" + str(i) + "Y" + ", "
-            head_variables += "R" + str(i) + "W" + ", "
-            head_variables += "R" + str(i) + "H" + ", "
-
-        head_variables = head_variables[:-2]
-        predicate_head = predicate_head + head_variables
-        predicate_head += ") "
-        query = query_start + head_variables + ") "
-        predicate_body = ":- repeat, "
-        room_type = []
-
-        for i in range(0, bedroom_no):
-            room_type.append('bedroom')
-        for i in range(0, bathroom_no):
-            room_type.append('bathroom')
-        for i in range(0, kitchen_no):
-            room_type.append('kitchen')
-        for i in range(0, hall_no):
-            room_type.append('hall')
-
-        for i in range(0, room_number):
-            if room_type[i] == 'bedroom':
-                predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
-                    17.0 * self._multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
-                    17.0 * self._multiplier) + ", R" + str(i) + "H), "
-                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
-                    i) + ", R" + str(i) + "X), "
-                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
-                    i) + ", R" + str(i) + "Y), "
-            if room_type[i] == 'bathroom':
-                predicate_body += "random(" + str(8.0 * self._multiplier) + ", " + str(
-                    12.0 * self._multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(8.0 * self._multiplier) + ", " + str(
-                    12.0 * self._multiplier) + ", R" + str(i) + "H), "
-                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
-                    i) + ", R" + str(i) + "X), "
-                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
-                    i) + ", R" + str(i) + "Y), "
-            if room_type[i] == 'kitchen':
-                predicate_body += "random(" + str(10.0 * self._multiplier) + ", " + str(
-                    15.0 * self._multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(10.0 * self._multiplier) + ", " + str(
-                    15.0 * self._multiplier) + ", R" + str(i) + "H), "
-                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
-                    i) + ", R" + str(i) + "X), "
-                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
-                    i) + ", R" + str(i) + "Y), "
-            if room_type[i] == 'hall':
-                predicate_body += "random(" + str(15.0 * self._multiplier) + ", " + str(
-                    20.0 * self._multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(15.0 * self._multiplier) + ", " + str(
-                    20.0 * self._multiplier) + ", R" + str(i) + "H), "
-                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
-                    i) + ", R" + str(i) + "X), "
-                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
-                    i) + ", R" + str(i) + "Y), "
-
-        for i in range(0, room_number):
-            for j in range(i + 1, room_number):
-                predicate_body += "{(R" + str(i) + "X + R" + str(i) + "W + " + str(
-                    self._fake_collision_mt * self._multiplier) + " =< R" + str(j) + "X ; R" + str(j) + "X + R" + str(
-                    j) + "W + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "X) ; (R" + str(
-                    i) + "Y + R" + str(i) + "H + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(
-                    j) + "Y ; R" + str(j) + "Y + R" + str(j) + "H + " + str(
-                    self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "Y)}, "
-
-        if room_number > 1:
-            predicate_body += "CentreX is ("
-            for i in range(0, room_number):
-                predicate_body += "R" + str(i) + "X + "
-            predicate_body = predicate_body[:-3]
-            predicate_body += ") / " + str(room_number) + ", "
-            predicate_body += "CentreY is ("
-            for i in range(0, room_number):
-                predicate_body += "R" + str(i) + "Y + "
-            predicate_body = predicate_body[:-3]
-            predicate_body += ") / " + str(room_number) + ", "
-
-            for i in range(0, room_number):
-                predicate_body += "RoomDistance" + str(i) + " is "
-                predicate_body += "sqrt(((R" + str(i) + "X + R" + str(i) + "W/2) - (CentreX))^2 + ((R" + str(
-                    i) + "Y + R" + str(i) + "H/2) - (CentreY))^2), "
-                predicate_body += "{DistanceRoom" + str(i) + " =< " + str(
-                    room_distance_threshold * self._multiplier) + "}, "
-
-        predicate_body = predicate_body[:-2]
-        predicate_body += ", !"
-        print((predicate_head + predicate_body))
+        predicate_body, predicate_head, query, room_type = self.build_query(bathroom_no, bedroom_no, hall_no,
+                                                                            kitchen_no, room_distance_threshold,
+                                                                            room_number)
         self._prolog.assertz(predicate_head + predicate_body)
+        query_out = self._prolog.query(query)
+        self.make_rooms(room_number, room_type, query_out)
 
-        prolog_query = query
-        rooms = []
-
-        for sol in self._prolog.query(prolog_query):
-            for i in range(0, room_number):
-                room_sprite = pygame.sprite.Sprite()
-                if room_type[i] == 'bathroom':
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bathroom'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-                elif room_type[i] == 'kitchen':
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['kitchen'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-                elif room_type[i] == 'bedroom':
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bedroom'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-                else:
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['hall'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-
-                room_sprite.rect = pygame.Rect(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"],
-                                               sol["R" + str(i) + "W"],
-                                               sol["R" + str(i) + "H"])
-                room = Room(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"], sol["R" + str(i) + "W"],
-                            sol["R" + str(i) + "H"], i, room_sprite, room_type[i])
-                room.vertex1 = Vertex(room.x, room.y + room.height)
-                room.vertex2 = Vertex(room.x + room.width, room.y + room.height)
-                room.vertex3 = Vertex(room.x + room.width, room.y)
-                room.vertex4 = Vertex(room.x, room.y)
-                rooms.append(room)
-
-        self._rooms = rooms
         self._prolog.retract(predicate_head + predicate_body)
         barycenter_x = 0
         barycenter_y = 0
@@ -490,7 +379,130 @@ class Environment_Generation:
                                                             int(1.0 * self._multiplier)))
                 room.door = Game_Object(door_x, room.y, 2.5 * self._multiplier, 0, door_sprite, 'door')
 
-        return rooms
+        return self._rooms
+
+    def make_rooms(self, room_number, room_type, query_out):
+        self._rooms = []
+        for sol in query_out:
+            for i in range(0, room_number):
+                room_sprite = pygame.sprite.Sprite()
+                if room_type[i] == 'bathroom':
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bathroom'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+                elif room_type[i] == 'kitchen':
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['kitchen'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+                elif room_type[i] == 'bedroom':
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bedroom'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+                else:
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['hall'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+
+                room_sprite.rect = pygame.Rect(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"],
+                                               sol["R" + str(i) + "W"],
+                                               sol["R" + str(i) + "H"])
+                room = Room(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"], sol["R" + str(i) + "W"],
+                            sol["R" + str(i) + "H"], i, room_sprite, room_type[i])
+                room.vertex1 = Vertex(room.x, room.y + room.height)
+                room.vertex2 = Vertex(room.x + room.width, room.y + room.height)
+                room.vertex3 = Vertex(room.x + room.width, room.y)
+                room.vertex4 = Vertex(room.x, room.y)
+                self._rooms.append(room)
+
+    def build_query(self, bathroom_no, bedroom_no, hall_no, kitchen_no, room_distance_threshold, room_number):
+        head_variables = ""
+        predicate_head = "generateEnvironment(EnvWidth, EnvHeight, "
+        query_start = "generateEnvironment(" + str(self._env_width) + ", " + str(self._env_height) + ", "
+        for i in range(0, room_number):
+            head_variables += "R" + str(i) + "X" + ", "
+            head_variables += "R" + str(i) + "Y" + ", "
+            head_variables += "R" + str(i) + "W" + ", "
+            head_variables += "R" + str(i) + "H" + ", "
+        head_variables = head_variables[:-2]
+        predicate_head = predicate_head + head_variables
+        predicate_head += ") "
+        query = query_start + head_variables + ") "
+        predicate_body = ":- repeat, "
+        room_type = []
+        for i in range(0, bedroom_no):
+            room_type.append('bedroom')
+        for i in range(0, bathroom_no):
+            room_type.append('bathroom')
+        for i in range(0, kitchen_no):
+            room_type.append('kitchen')
+        for i in range(0, hall_no):
+            room_type.append('hall')
+        for i in range(0, room_number):
+            if room_type[i] == 'bedroom':
+                predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
+                    17.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
+                    17.0 * self._multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
+                    i) + ", R" + str(i) + "X), "
+                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
+                    i) + ", R" + str(i) + "Y), "
+            if room_type[i] == 'bathroom':
+                predicate_body += "random(" + str(8.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(8.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
+                    i) + ", R" + str(i) + "X), "
+                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
+                    i) + ", R" + str(i) + "Y), "
+            if room_type[i] == 'kitchen':
+                predicate_body += "random(" + str(10.0 * self._multiplier) + ", " + str(
+                    15.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(10.0 * self._multiplier) + ", " + str(
+                    15.0 * self._multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
+                    i) + ", R" + str(i) + "X), "
+                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
+                    i) + ", R" + str(i) + "Y), "
+            if room_type[i] == 'hall':
+                predicate_body += "random(" + str(15.0 * self._multiplier) + ", " + str(
+                    20.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(15.0 * self._multiplier) + ", " + str(
+                    20.0 * self._multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
+                    i) + ", R" + str(i) + "X), "
+                predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
+                    i) + ", R" + str(i) + "Y), "
+        for i in range(0, room_number):
+            for j in range(i + 1, room_number):
+                predicate_body += "{(R" + str(i) + "X + R" + str(i) + "W + " + str(
+                    self._fake_collision_mt * self._multiplier) + " =< R" + str(j) + "X ; R" + str(j) + "X + R" + str(
+                    j) + "W + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "X) ; (R" + str(
+                    i) + "Y + R" + str(i) + "H + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(
+                    j) + "Y ; R" + str(j) + "Y + R" + str(j) + "H + " + str(
+                    self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "Y)}, "
+        if room_number > 1:
+            predicate_body += "CentreX is ("
+            for i in range(0, room_number):
+                predicate_body += "R" + str(i) + "X + "
+            predicate_body = predicate_body[:-3]
+            predicate_body += ") / " + str(room_number) + ", "
+            predicate_body += "CentreY is ("
+            for i in range(0, room_number):
+                predicate_body += "R" + str(i) + "Y + "
+            predicate_body = predicate_body[:-3]
+            predicate_body += ") / " + str(room_number) + ", "
+
+            for i in range(0, room_number):
+                predicate_body += "RoomDistance" + str(i) + " is "
+                predicate_body += "sqrt(((R" + str(i) + "X + R" + str(i) + "W/2) - (CentreX))^2 + ((R" + str(
+                    i) + "Y + R" + str(i) + "H/2) - (CentreY))^2), "
+                predicate_body += "{DistanceRoom" + str(i) + " =< " + str(
+                    room_distance_threshold * self._multiplier) + "}, "
+        predicate_body = predicate_body[:-2]
+        predicate_body += ", !"
+        return predicate_body, predicate_head, query, room_type
 
     def makes_sprites(self):
         self._type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),

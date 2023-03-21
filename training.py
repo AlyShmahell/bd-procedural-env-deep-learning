@@ -36,7 +36,7 @@ class Training:
             self.environment._agent = self.agent
             self.environment._objective = self.objective
             self.environment._floor = self.floor
-            self.environment.screen = self.screen
+            self.environment._screen = self.screen
             self.environment.reset_objective()
             state = np.reshape(self.environment.project_segments()[0], [1, state_size, 3])
             last_dist_from_spawn = 0
@@ -86,7 +86,7 @@ class Training:
                             self.agent.y += speed
 
                     self.environment._rooms = self.rooms
-                    self.environment.screen = self.screen
+                    self.environment._screen = self.screen
                     self.environment.draw_model()
                     pygame.display.update()
 
