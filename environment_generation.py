@@ -9,7 +9,7 @@ from utils import Check_Collisions, Agent, Vertex, Room, Game_Object
 
 
 class Environment_Generation:
-    """Class to generate environment"""
+    """Class to generate _environment"""
 
     def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
         self._type_to_sprite = None
@@ -26,14 +26,16 @@ class Environment_Generation:
         self._objective_position = [(270, 190), (250, 325), (110, 290), (160, 170), (160, 240), (220, 240), (230, 280),
                                     (170, 320)]
         self._rooms = []
-
+        self._screen = None
         prolog_query = "use_module(library(clpr))"
 
         for solution in self._prolog.query(prolog_query):
             print("CLPR loaded.")
 
     def generate_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
-        self.generate_rooms_doors(bathroom_no, bedroom_no, kitchen_no, hall_no)
+        floor_pos, door_pos_x, door_pos_y = random.random(), random.random(), random.random()
+        self.generate_rooms_and_doors(bathroom_no, bedroom_no, kitchen_no, hall_no,
+                                      floor_pos, door_pos_x, door_pos_y)
         for bathroom in self.get_rooms(flag='bathroom'):
             self.populate_bathroom(bathroom, random.randint(0, 1), random.randint(0, 1), random.randint(0, 1))
         for bedroom in self.get_rooms(flag='bedroom'):
@@ -45,28 +47,12 @@ class Environment_Generation:
 
     def draw_model(self):
         if len(self._rooms) > 1:
-            self.screen.blit(self._floor.sprite.image, self._floor.sprite.rect)
-            pygame.draw.rect(self.screen, (255, 255, 255), self._floor.sprite.rect, 2)
+            self._screen.blit(self._floor.sprite.image, self._floor.sprite.rect)
+            pygame.draw.rect(self._screen, (255, 255, 255), self._floor.sprite.rect, 2)
+        self.draw_rooms()
+        self.draw_agent_and_target()
 
-        for room in self._rooms:
-            self.screen.blit(room.sprite.image, room.sprite.rect)
-            pygame.draw.rect(self.screen, (255, 255, 255), room.sprite.rect, 2)
-
-            if room.door.width == 0:
-                blitRect = pygame.Rect(room.door.x - 0.5 * self._multiplier, room.door.y, 1.0 * self._multiplier,
-                                       room.door.height)
-                self.screen.blit(room.door.sprite.image, blitRect)
-                room.door.sprite.rect = blitRect
-            else:
-                blitRect = pygame.Rect(room.door.x, room.door.y - 0.5 * self._multiplier, room.door.width,
-                                       1.0 * self._multiplier)
-                self.screen.blit(room.door.sprite.image, blitRect)
-                room.door.sprite.rect = blitRect
-
-            for room_child in room.children:
-                self.screen.blit(room_child.sprite.image, room_child.sprite.rect)
-                for child in room_child.children:
-                    self.screen.blit(child.sprite.image, child.sprite.rect)
+    def draw_agent_and_target(self):
         if self._agent.targetRot - self._agent.rot != 0:
             self._agent.image = pygame.transform.rotate(self._agent.sprite.image, self._agent.targetRot - 90)
             old_center = self._agent.sprite.rect.center
@@ -75,19 +61,47 @@ class Environment_Generation:
             self._agent.rot = self._agent.targetRot
         self._agent.sprite.rect.x = self._agent.x
         self._agent.sprite.rect.y = self._agent.y
-        self.screen.blit(self._agent.image, self._agent.sprite.rect)
-        self.screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
+        self._screen.blit(self._agent.image, self._agent.sprite.rect)
+        self._screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
 
-    def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no, mode='view'):
+    def draw_rooms(self):
+        for room in self._rooms:
+            self._screen.blit(room.sprite.image, room.sprite.rect)
+            pygame.draw.rect(self._screen, (255, 255, 255), room.sprite.rect, 2)
+
+            if room.door.width == 0:
+                blitRect = pygame.Rect(room.door.x - 0.5 * self._multiplier, room.door.y, 1.0 * self._multiplier,
+                                       room.door.height)
+                self._screen.blit(room.door.sprite.image, blitRect)
+                room.door.sprite.rect = blitRect
+            else:
+                blitRect = pygame.Rect(room.door.x, room.door.y - 0.5 * self._multiplier, room.door.width,
+                                       1.0 * self._multiplier)
+                self._screen.blit(room.door.sprite.image, blitRect)
+                room.door.sprite.rect = blitRect
+
+            for room_child in room.children:
+                self._screen.blit(room_child.sprite.image, room_child.sprite.rect)
+                for child in room_child.children:
+                    self._screen.blit(child.sprite.image, child.sprite.rect)
+
+    def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no,
+                            mode='view'):
         running = True
         clock = pygame.time.Clock()
         pygame.init()
         pygame.display.set_caption("Environment Generator")
         frames = 1500
         score = 0
+        f_once = mode == 'view'
         while running:
-            self.screen.fill((30, 30, 30))
-            self.draw_model()
+            if f_once:
+                self._screen.fill((30, 30, 30))
+                self.draw_model()
+                f_once = False
+            elif mode == "generate":
+                self._screen.fill((30, 30, 30))
+                self.draw_model()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -99,99 +113,9 @@ class Environment_Generation:
                     self.reset()
             if not running:
                 break
+            # self.react_to_keys(bathroom_no, bedroom_no, hall_no, kitchen_no, mode)
             pressed = pygame.key.get_pressed()
-            if pressed[pygame.K_s] and mode == "generate":
-                self.save_generated_model()
-                self.reset()
-                self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
-                                          hall_no)
-                self.draw_model()
-            if pressed[pygame.K_n] and mode == "generate":
-                self.reset()
-                self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
-                                          hall_no)
-                self.draw_model()
-            if pressed[pygame.K_UP] and pressed[pygame.K_RIGHT]:
-                self._agent.targetRot = 45
-                self._agent.x += 2
-                self._agent.y -= 2
-            elif pressed[pygame.K_UP] and pressed[pygame.K_LEFT]:
-                self._agent.targetRot = 135
-                self._agent.x -= 2
-                self._agent.y -= 2
-            elif pressed[pygame.K_DOWN] and pressed[pygame.K_RIGHT]:
-                self._agent.targetRot = 315
-                self._agent.x += 2
-                self._agent.y += 2
-            elif pressed[pygame.K_DOWN] and pressed[pygame.K_LEFT]:
-                self._agent.targetRot = 225
-                self._agent.x -= 2
-                self._agent.y += 2
-            elif pressed[pygame.K_UP]:
-                self._agent.targetRot = 90
-                self._agent.y -= 2
-            elif pressed[pygame.K_DOWN]:
-                self._agent.targetRot = 270
-                self._agent.y += 2
-            elif pressed[pygame.K_LEFT]:
-                self._agent.targetRot = 180
-                self._agent.x -= 2
-            elif pressed[pygame.K_RIGHT]:
-                self._agent.targetRot = 0
-                self._agent.x += 2
-
-            elif pressed[pygame.K_SPACE]:
-                angle_range = 120
-                step = 3
-                eye_point = self._agent.sprite.rect.center
-                slope = (self._agent.targetRot + angle_range / 2) % 360
-                test_distances = []
-                for i in range(0, angle_range, step):
-                    x = math.cos(math.radians(slope)) * 220
-                    y = math.sin(math.radians(slope)) * 220
-                    view_point = (eye_point[0] + x, eye_point[1] - y)
-                    slope = (slope - step) % 360
-                    intersection_points = []
-                    intersection_points_distances = []
-                    for room in self._rooms:
-                        intersection_point = self._checker.check_line_room_collision(
-                            (eye_point[0], eye_point[1], view_point[0], view_point[1]), room)
-                        if intersection_point is not None:
-                            intersection_points.append(intersection_point)
-                        for room_child in room.children:
-                            intersection_point = self._checker.check_line_rect_collision(
-                                (eye_point[0], eye_point[1], view_point[0], view_point[1]), room_child.sprite.rect)
-                            if intersection_point is not None:
-                                intersection_points.append(intersection_point)
-                            for child in room_child.children:
-                                intersection_point = self._checker.check_line_rect_collision(
-                                    (eye_point[0], eye_point[1], view_point[0], view_point[1]), child.sprite.rect)
-                                if intersection_point is not None:
-                                    intersection_points.append(intersection_point)
-                    intersection_point_floor = self._checker.check_line_rect_collision(
-                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._floor.sprite.rect)
-                    if intersection_point_floor is not None:
-                        any_room_contains_point = False
-                        for room in self._rooms:
-                            if self._checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
-                                any_room_contains_point = True
-                                break
-                        if not any_room_contains_point:
-                            intersection_points.append(intersection_point_floor)
-                    intersection_point_objective = self._checker.check_line_rect_collision(
-                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._objective.sprite.rect)
-                    if intersection_point_objective is not None:
-                        intersection_points.append(intersection_point_objective)
-                    for point in intersection_points:
-                        intersection_points_distances.append(self._checker.point_point_distance(eye_point, point))
-                    if len(intersection_points) > 0:
-                        test_distances.append(min(intersection_points_distances) / 220)
-                        chosen_index = np.argmin(intersection_points_distances)
-                        chosen_point = intersection_points[chosen_index]
-                        if 10 <= i / step <= 30:
-                            pygame.draw.circle(self.screen, (255, 0, 0), chosen_point, 2)
-                if min(test_distances) < 0.049:
-                    print("activation avoidance")
+            self.simple_react_to_keys(pressed, bathroom_no, bedroom_no, hall_no, kitchen_no, mode)
             if self._agent.sprite.rect.colliderect(self._objective.sprite.rect):
                 self.reset_objective()
                 score += 1
@@ -202,6 +126,112 @@ class Environment_Generation:
                 running = False
                 print(f"score achieved: {str(score)}")
         pygame.display.quit()
+
+    def old_react_to_keys(self, bathroom_no, bedroom_no, hall_no, kitchen_no, mode):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_s] and mode == "generate":
+            self.save_generated_model()
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
+                                      hall_no)
+            self.draw_model()
+        if pressed[pygame.K_n] and mode == "generate":
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no,
+                                      hall_no)
+            self.draw_model()
+        if pressed[pygame.K_UP] and pressed[pygame.K_RIGHT]:
+            self._agent.targetRot = 45
+            self._agent.x += 2
+            self._agent.y -= 2
+        elif pressed[pygame.K_UP] and pressed[pygame.K_LEFT]:
+            self._agent.targetRot = 135
+            self._agent.x -= 2
+            self._agent.y -= 2
+        elif pressed[pygame.K_DOWN] and pressed[pygame.K_RIGHT]:
+            self._agent.targetRot = 315
+            self._agent.x += 2
+            self._agent.y += 2
+        elif pressed[pygame.K_DOWN] and pressed[pygame.K_LEFT]:
+            self._agent.targetRot = 225
+            self._agent.x -= 2
+            self._agent.y += 2
+        elif pressed[pygame.K_UP]:
+            self._agent.targetRot = 90
+            self._agent.y -= 2
+        elif pressed[pygame.K_DOWN]:
+            self._agent.targetRot = 270
+            self._agent.y += 2
+        elif pressed[pygame.K_LEFT]:
+            self._agent.targetRot = 180
+            self._agent.x -= 2
+        elif pressed[pygame.K_RIGHT]:
+            self._agent.targetRot = 0
+            self._agent.x += 2
+
+        elif pressed[pygame.K_SPACE]:
+            angle_range = 120
+            step = 3
+            eye_point = self._agent.sprite.rect.center
+            slope = (self._agent.targetRot + angle_range / 2) % 360
+            test_distances = []
+            for i in range(0, angle_range, step):
+                x = math.cos(math.radians(slope)) * 220
+                y = math.sin(math.radians(slope)) * 220
+                view_point = (eye_point[0] + x, eye_point[1] - y)
+                slope = (slope - step) % 360
+                intersection_points = []
+                intersection_points_distances = []
+                for room in self._rooms:
+                    intersection_point = self._checker.check_line_room_collision(
+                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), room)
+                    if intersection_point is not None:
+                        intersection_points.append(intersection_point)
+                    for room_child in room.children:
+                        intersection_point = self._checker.check_line_rect_collision(
+                            (eye_point[0], eye_point[1], view_point[0], view_point[1]), room_child.sprite.rect)
+                        if intersection_point is not None:
+                            intersection_points.append(intersection_point)
+                        for child in room_child.children:
+                            intersection_point = self._checker.check_line_rect_collision(
+                                (eye_point[0], eye_point[1], view_point[0], view_point[1]), child.sprite.rect)
+                            if intersection_point is not None:
+                                intersection_points.append(intersection_point)
+                intersection_point_floor = self._checker.check_line_rect_collision(
+                    (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._floor.sprite.rect)
+                if intersection_point_floor is not None:
+                    any_room_contains_point = False
+                    for room in self._rooms:
+                        if self._checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
+                            any_room_contains_point = True
+                            break
+                    if not any_room_contains_point:
+                        intersection_points.append(intersection_point_floor)
+                intersection_point_objective = self._checker.check_line_rect_collision(
+                    (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._objective.sprite.rect)
+                if intersection_point_objective is not None:
+                    intersection_points.append(intersection_point_objective)
+                for point in intersection_points:
+                    intersection_points_distances.append(self._checker.point_point_distance(eye_point, point))
+                if len(intersection_points) > 0:
+                    test_distances.append(min(intersection_points_distances) / 220)
+                    chosen_index = np.argmin(intersection_points_distances)
+                    chosen_point = intersection_points[chosen_index]
+                    if 10 <= i / step <= 30:
+                        pygame.draw.circle(self._screen, (255, 0, 0), chosen_point, 2)
+            if test_distances and min(test_distances) < 0.049:
+                print("activation avoidance")
+
+    def simple_react_to_keys(self, pressed, bathroom_no, bedroom_no, hall_no, kitchen_no, mode):
+        if pressed[pygame.K_s] and mode == "generate":
+            self.save_generated_model()
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no, hall_no)
+            self.draw_model()
+        if pressed[pygame.K_n] and mode == "generate":
+            self.reset()
+            self.generate_environment(bathroom_no, bedroom_no, kitchen_no, hall_no)
+            self.draw_model()
 
     def reset_objective(self):
         random_next_x = self._objective.sprite.rect.x
@@ -219,14 +249,189 @@ class Environment_Generation:
         self._floor = Game_Object(0, 0, 0, 0, 0, 'floor')
         self._rooms = []
 
-    def generate_rooms_doors(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
+    def generate_rooms_and_doors(self, bathroom_no, bedroom_no,
+                                 kitchen_no, hall_no,
+                                 floor_pos, door_pos_x, door_pos_y):
         room_number = bedroom_no + kitchen_no + bathroom_no + hall_no
         room_distance_threshold = 10.0 + 3 * room_number
         self._env_width = self._env_width + (8.0 * room_number * self._multiplier)
         self._env_height = self._env_height + (8.0 * room_number * self._multiplier)
-        self.screen = pygame.display.set_mode((int(self._env_width), int(self._env_height)))
+        self._screen = pygame.display.set_mode((int(self._env_width), int(self._env_height)))
         self.makes_sprites()
 
+        predicate_body, predicate_head, query, room_type = self.build_query(bathroom_no, bedroom_no, hall_no,
+                                                                            kitchen_no, room_distance_threshold,
+                                                                            room_number)
+        self._prolog.assertz(predicate_head + predicate_body)
+        query_out = self._prolog.query(query)
+        self.make_rooms(room_number, room_type, query_out)
+        self._prolog.retract(predicate_head + predicate_body)
+        barycenter = self.make_barycenter()
+        self.make_floor(barycenter, floor_pos)
+        self.make_doors(barycenter)
+
+    def make_doors(self, barycenter):
+        for room in self._rooms:
+            side1 = (room.vertex1, room.vertex4)
+            side2 = (room.vertex1, room.vertex2)
+            side3 = (room.vertex2, room.vertex3)
+            side4 = (room.vertex3, room.vertex4)
+
+            side_distance1 = math.sqrt((((side1[0].x + side1[1].x) / 2) - barycenter.x) ** 2 +
+                                       (((side1[0].y + side1[1].y) / 2) - barycenter.y) ** 2)
+            side_distance2 = math.sqrt((((side2[0].x + side2[1].x) / 2) - barycenter.x) ** 2 +
+                                       (((side2[0].y + side2[1].y) / 2) - barycenter.y) ** 2)
+            side_distance3 = math.sqrt((((side3[0].x + side3[1].x) / 2) - barycenter.x) ** 2 +
+                                       (((side3[0].y + side3[1].y) / 2) - barycenter.y) ** 2)
+            side_distance4 = math.sqrt((((side4[0].x + side4[1].x) / 2) - barycenter.x) ** 2 +
+                                       (((side4[0].y + side4[1].y) / 2) - barycenter.y) ** 2)
+            min_distance = min(side_distance1, side_distance2, side_distance3, side_distance4)
+
+            if min_distance == side_distance1:
+                constraints_satisfied = False
+                door_y = 0
+                while not constraints_satisfied:
+                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
+                    if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
+                        constraints_satisfied = True
+                door_sprite = pygame.sprite.Sprite()
+                door_sprite.image = self._type_to_sprite['door']
+                door_sprite.image = pygame.transform.scale(door_sprite.image,
+                                                           (int(1.0 * self._multiplier),
+                                                            int(2.5 * self._multiplier)))
+                room.door = Game_Object(room.x, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
+
+            elif min_distance == side_distance2:
+                constraints_satisfied = False
+                door_x = 0
+                while not constraints_satisfied:
+                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
+                    if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
+                        constraints_satisfied = True
+                door_sprite = pygame.sprite.Sprite()
+                door_sprite.image = self._type_to_sprite['door']
+                door_sprite.image = pygame.transform.rotate(door_sprite.image, 90)
+                door_sprite.image = pygame.transform.scale(door_sprite.image,
+                                                           (int(2.5 * self._multiplier),
+                                                            int(1.0 * self._multiplier)))
+                room.door = Game_Object(door_x, room.y + room.height, 2.5 * self._multiplier, 0, door_sprite, 'door')
+
+            elif min_distance == side_distance3:
+                constraints_satisfied = False
+                door_y = 0
+                while not constraints_satisfied:
+                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
+                    if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
+                        constraints_satisfied = True
+
+                door_sprite = pygame.sprite.Sprite()
+                door_sprite.image = self._type_to_sprite['door']
+                door_sprite.image = pygame.transform.scale(door_sprite.image,
+                                                           (int(1.0 * self._multiplier),
+                                                            int(2.5 * self._multiplier)))
+                room.door = Game_Object(room.x + room.width, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
+            else:
+                constraints_satisfied = False
+                door_x = 0
+                while not constraints_satisfied:
+                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
+                    if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
+                        constraints_satisfied = True
+                door_sprite = pygame.sprite.Sprite()
+                door_sprite.image = self._type_to_sprite['door']
+                door_sprite.image = pygame.transform.rotate(door_sprite.image, 90)
+                door_sprite.image = pygame.transform.scale(door_sprite.image,
+                                                           (int(2.5 * self._multiplier),
+                                                            int(1.0 * self._multiplier)))
+                room.door = Game_Object(door_x, room.y, 2.5 * self._multiplier, 0, door_sprite, 'door')
+
+    def make_floor(self, barycenter, floor_pos):
+        vertexes_xs = []
+        vertexes_ys = []
+        for room in self._rooms:
+            vertex1_distance = math.sqrt(
+                (room.vertex1.x - barycenter.x) ** 2 + (room.vertex1.y - barycenter.y) ** 2)
+            vertex2_distance = math.sqrt(
+                (room.vertex2.x - barycenter.x) ** 2 + (room.vertex2.y - barycenter.y) ** 2)
+            vertex3_distance = math.sqrt(
+                (room.vertex3.x - barycenter.x) ** 2 + (room.vertex3.y - barycenter.y) ** 2)
+            vertex4_distance = math.sqrt(
+                (room.vertex4.x - barycenter.x) ** 2 + (room.vertex4.y - barycenter.y) ** 2)
+
+            min_distance = min(vertex1_distance, vertex2_distance, vertex3_distance, vertex4_distance)
+
+            if min_distance == vertex1_distance:
+                vertexes_xs.append(room.vertex1.x)
+                vertexes_ys.append(room.vertex1.y)
+            elif min_distance == vertex2_distance:
+                vertexes_xs.append(room.vertex2.x)
+                vertexes_ys.append(room.vertex2.y)
+            elif min_distance == vertex3_distance:
+                vertexes_xs.append(room.vertex3.x)
+                vertexes_ys.append(room.vertex3.y)
+            else:
+                vertexes_xs.append(room.vertex4.x)
+                vertexes_ys.append(room.vertex4.y)
+        space_multiplier = (floor_pos * 3 + 3) * self._multiplier
+        floor_sprite = pygame.sprite.Sprite()
+        floor_sprite.image = self._type_to_sprite['floor']
+        floor_sprite.image = pygame.transform.scale(floor_sprite.image, (
+            int(max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2),
+            int(max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)))
+        floor_sprite.rect = pygame.Rect(min(vertexes_xs) - space_multiplier,
+                                        min(vertexes_ys) - space_multiplier,
+                                        max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
+                                        max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)
+        self._floor = Game_Object(min(vertexes_xs) - space_multiplier, min(vertexes_ys) - space_multiplier,
+                                  max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
+                                  max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2,
+                                  floor_sprite, 'floor')
+
+    def make_barycenter(self):
+        barycenter_x = 0
+        barycenter_y = 0
+        for room in self._rooms:
+            barycenter_x += room.x + room.width / 2
+            barycenter_y += room.y + room.height / 2
+        barycenter_x /= len(self._rooms)
+        barycenter_y /= len(self._rooms)
+        barycenter = Vertex(barycenter_x, barycenter_y)
+        return barycenter
+
+    def make_rooms(self, room_number, room_type, query_out):
+        self._rooms = []
+        for sol in query_out:
+            for i in range(0, room_number):
+                room_sprite = pygame.sprite.Sprite()
+                if room_type[i] == 'bathroom':
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bathroom'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+                elif room_type[i] == 'kitchen':
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['kitchen'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+                elif room_type[i] == 'bedroom':
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bedroom'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+                else:
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['hall'],
+                                                               (int(sol["R" + str(i) + "W"]),
+                                                                int(sol["R" + str(i) + "H"])))
+
+                room_sprite.rect = pygame.Rect(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"],
+                                               sol["R" + str(i) + "W"],
+                                               sol["R" + str(i) + "H"])
+                room = Room(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"], sol["R" + str(i) + "W"],
+                            sol["R" + str(i) + "H"], i, room_sprite, room_type[i])
+                room.vertex1 = Vertex(room.x, room.y + room.height)
+                room.vertex2 = Vertex(room.x + room.width, room.y + room.height)
+                room.vertex3 = Vertex(room.x + room.width, room.y)
+                room.vertex4 = Vertex(room.x, room.y)
+                self._rooms.append(room)
+
+    def build_query(self, bathroom_no, bedroom_no, hall_no, kitchen_no, room_distance_threshold, room_number):
         head_variables = ""
         predicate_head = "generateEnvironment(EnvWidth, EnvHeight, "
         query_start = "generateEnvironment(" + str(self._env_width) + ", " + str(self._env_height) + ", "
@@ -235,14 +440,12 @@ class Environment_Generation:
             head_variables += "R" + str(i) + "Y" + ", "
             head_variables += "R" + str(i) + "W" + ", "
             head_variables += "R" + str(i) + "H" + ", "
-
         head_variables = head_variables[:-2]
         predicate_head = predicate_head + head_variables
         predicate_head += ") "
         query = query_start + head_variables + ") "
         predicate_body = ":- repeat, "
         room_type = []
-
         for i in range(0, bedroom_no):
             room_type.append('bedroom')
         for i in range(0, bathroom_no):
@@ -251,7 +454,6 @@ class Environment_Generation:
             room_type.append('kitchen')
         for i in range(0, hall_no):
             room_type.append('hall')
-
         for i in range(0, room_number):
             if room_type[i] == 'bedroom':
                 predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
@@ -289,7 +491,6 @@ class Environment_Generation:
                     i) + ", R" + str(i) + "X), "
                 predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
                     i) + ", R" + str(i) + "Y), "
-
         for i in range(0, room_number):
             for j in range(i + 1, room_number):
                 predicate_body += "{(R" + str(i) + "X + R" + str(i) + "W + " + str(
@@ -298,7 +499,6 @@ class Environment_Generation:
                     i) + "Y + R" + str(i) + "H + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(
                     j) + "Y ; R" + str(j) + "Y + R" + str(j) + "H + " + str(
                     self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "Y)}, "
-
         if room_number > 1:
             predicate_body += "CentreX is ("
             for i in range(0, room_number):
@@ -317,172 +517,9 @@ class Environment_Generation:
                     i) + "Y + R" + str(i) + "H/2) - (CentreY))^2), "
                 predicate_body += "{DistanceRoom" + str(i) + " =< " + str(
                     room_distance_threshold * self._multiplier) + "}, "
-
         predicate_body = predicate_body[:-2]
         predicate_body += ", !"
-        print((predicate_head + predicate_body))
-        self._prolog.assertz(predicate_head + predicate_body)
-
-        prolog_query = query
-        rooms = []
-
-        for sol in self._prolog.query(prolog_query):
-            for i in range(0, room_number):
-                room_sprite = pygame.sprite.Sprite()
-                if room_type[i] == 'bathroom':
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bathroom'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-                elif room_type[i] == 'kitchen':
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['kitchen'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-                elif room_type[i] == 'bedroom':
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bedroom'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-                else:
-                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['hall'],
-                                                               (int(sol["R" + str(i) + "W"]),
-                                                                int(sol["R" + str(i) + "H"])))
-
-                room_sprite.rect = pygame.Rect(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"],
-                                               sol["R" + str(i) + "W"],
-                                               sol["R" + str(i) + "H"])
-                room = Room(sol["R" + str(i) + "X"], sol["R" + str(i) + "Y"], sol["R" + str(i) + "W"],
-                            sol["R" + str(i) + "H"], i, room_sprite, room_type[i])
-                room.vertex1 = Vertex(room.x, room.y + room.height)
-                room.vertex2 = Vertex(room.x + room.width, room.y + room.height)
-                room.vertex3 = Vertex(room.x + room.width, room.y)
-                room.vertex4 = Vertex(room.x, room.y)
-                rooms.append(room)
-
-        self._rooms = rooms
-        self._prolog.retract(predicate_head + predicate_body)
-        barycenter_x = 0
-        barycenter_y = 0
-
-        for room in self._rooms:
-            barycenter_x += room.x + room.width / 2
-            barycenter_y += room.y + room.height / 2
-
-        barycenter_x /= len(self._rooms)
-        barycenter_y /= len(self._rooms)
-        barycenter = Vertex(barycenter_x, barycenter_y)
-
-        vertexes_xs = []
-        vertexes_ys = []
-
-        for room in self._rooms:
-            vertex1_distance = math.sqrt(
-                (room.vertex1.x - barycenter.x) ** 2 + (room.vertex1.y - barycenter.y) ** 2)
-            vertex2_distance = math.sqrt(
-                (room.vertex2.x - barycenter.x) ** 2 + (room.vertex2.y - barycenter.y) ** 2)
-            vertex3_distance = math.sqrt(
-                (room.vertex3.x - barycenter.x) ** 2 + (room.vertex3.y - barycenter.y) ** 2)
-            vertex4_distance = math.sqrt(
-                (room.vertex4.x - barycenter.x) ** 2 + (room.vertex4.y - barycenter.y) ** 2)
-
-            min_distance = min(vertex1_distance, vertex2_distance, vertex3_distance, vertex4_distance)
-
-            if min_distance == vertex1_distance:
-                vertexes_xs.append(room.vertex1.x)
-                vertexes_ys.append(room.vertex1.y)
-            elif min_distance == vertex2_distance:
-                vertexes_xs.append(room.vertex2.x)
-                vertexes_ys.append(room.vertex2.y)
-            elif min_distance == vertex3_distance:
-                vertexes_xs.append(room.vertex3.x)
-                vertexes_ys.append(room.vertex3.y)
-            else:
-                vertexes_xs.append(room.vertex4.x)
-                vertexes_ys.append(room.vertex4.y)
-
-        space_multiplier = (random.random() * 3 + 3) * self._multiplier
-        floor_sprite = pygame.sprite.Sprite()
-        floor_sprite.image = self._type_to_sprite['floor']
-        floor_sprite.image = pygame.transform.scale(floor_sprite.image, (
-            int(max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2),
-            int(max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)))
-        floor_sprite.rect = pygame.Rect(min(vertexes_xs) - space_multiplier,
-                                        min(vertexes_ys) - space_multiplier,
-                                        max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
-                                        max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)
-        self._floor = Game_Object(min(vertexes_xs) - space_multiplier, min(vertexes_ys) - space_multiplier,
-                                  max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
-                                  max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2,
-                                  floor_sprite, 'floor')
-
-        for room in self._rooms:
-            side1 = (room.vertex1, room.vertex4)
-            side2 = (room.vertex1, room.vertex2)
-            side3 = (room.vertex2, room.vertex3)
-            side4 = (room.vertex3, room.vertex4)
-
-            side_distance1 = math.sqrt((((side1[0].x + side1[1].x) / 2) - barycenter.x) ** 2 +
-                                       (((side1[0].y + side1[1].y) / 2) - barycenter.y) ** 2)
-            side_distance2 = math.sqrt((((side2[0].x + side2[1].x) / 2) - barycenter.x) ** 2 +
-                                       (((side2[0].y + side2[1].y) / 2) - barycenter.y) ** 2)
-            side_distance3 = math.sqrt((((side3[0].x + side3[1].x) / 2) - barycenter.x) ** 2 +
-                                       (((side3[0].y + side3[1].y) / 2) - barycenter.y) ** 2)
-            side_distance4 = math.sqrt((((side4[0].x + side4[1].x) / 2) - barycenter.x) ** 2 +
-                                       (((side4[0].y + side4[1].y) / 2) - barycenter.y) ** 2)
-            min_distance = min(side_distance1, side_distance2, side_distance3, side_distance4)
-
-            if min_distance == side_distance1:
-                constraints_satisfied = False
-                while not constraints_satisfied:
-                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
-                    if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
-                        constraints_satisfied = True
-                door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self._type_to_sprite['door']
-                door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(1.0 * self._multiplier),
-                                                            int(2.5 * self._multiplier)))
-                room.door = Game_Object(room.x, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
-
-            elif min_distance == side_distance2:
-                constraints_satisfied = False
-                while not constraints_satisfied:
-                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
-                    if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
-                        constraints_satisfied = True
-                door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self._type_to_sprite['door']
-                door_sprite.image = pygame.transform.rotate(door_sprite.image, 90)
-                door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(2.5 * self._multiplier),
-                                                            int(1.0 * self._multiplier)))
-                room.door = Game_Object(door_x, room.y + room.height, 2.5 * self._multiplier, 0, door_sprite, 'door')
-
-            elif min_distance == side_distance3:
-                constraints_satisfied = False
-                while not constraints_satisfied:
-                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
-                    if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
-                        constraints_satisfied = True
-                door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self._type_to_sprite['door']
-                door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(1.0 * self._multiplier),
-                                                            int(2.5 * self._multiplier)))
-                room.door = Game_Object(room.x + room.width, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
-            else:
-                constraints_satisfied = False
-                while not constraints_satisfied:
-                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
-                    if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
-                        constraints_satisfied = True
-                door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self._type_to_sprite['door']
-                door_sprite.image = pygame.transform.rotate(door_sprite.image, 90)
-                door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(2.5 * self._multiplier),
-                                                            int(1.0 * self._multiplier)))
-                room.door = Game_Object(door_x, room.y, 2.5 * self._multiplier, 0, door_sprite, 'door')
-
-        return rooms
+        return predicate_body, predicate_head, query, room_type
 
     def makes_sprites(self):
         self._type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),
@@ -2157,7 +2194,7 @@ class Environment_Generation:
 
             serialized_environment["R" + str(room.index)] = serialized_room
 
-        with open('./environments/environment ' + str(
+        with open('./environments/_environment ' + str(
                 str(datetime.datetime.now().year) + '-' + str(datetime.datetime.now().month) + '-' + str(
                     datetime.datetime.now().day) + " " + str(datetime.datetime.now().hour) + "-" + str(
                     datetime.datetime.now().minute) + "-" + str(datetime.datetime.now().second)) + ".json",
