@@ -15,6 +15,7 @@ class Guizero:
     prova"""
 
     def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
+        self.listbox = None
         self._environment = Environment_Generation(env_width, env_height, multiplier, fake_collision_mt,
                                                    door_fake_collision_mt)
         self.training = Training(env_width, env_height, multiplier, self._environment)
@@ -134,9 +135,15 @@ class Guizero:
 
     def view_cmd(self):
         self.training.load_model(self.listbox.value)
-        self._environment.draw_model()
+        self._environment._rooms = self.training._rooms
+        self._environment._agent = self.training._agent
+        self._environment._objective = self.training._objective
+        self._environment._floor = self.training._floor
+        self._environment._screen = self.training._screen
+
+        # self._environment.draw_model()
         self._environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
-                                              self.sliderHA.value)
+                                               self.sliderHA.value)
 
     def view_env_back_cmd(self):
         self.env_view_box.hide()
@@ -151,8 +158,8 @@ class Guizero:
 
     def generate_cmd(self):
         info("Use the Generator",
-             "- During the environments generation, press key 'S' to save an environment and generate the next."
-             "\n\n- Press key 'N' to generate a new environment discarding the previous."
+             "- During the environments generation, press key 'S' to save an _environment and generate the next."
+             "\n\n- Press key 'N' to generate a new _environment discarding the previous."
              "\n\n- Close PyGame to comeback to the menu.")
         self._environment.generate_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
                                                self.sliderHA.value)

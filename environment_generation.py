@@ -9,7 +9,7 @@ from utils import Check_Collisions, Agent, Vertex, Room, Game_Object
 
 
 class Environment_Generation:
-    """Class to generate environment"""
+    """Class to generate _environment"""
 
     def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
         self._type_to_sprite = None
@@ -85,16 +85,23 @@ class Environment_Generation:
                 for child in room_child.children:
                     self._screen.blit(child.sprite.image, child.sprite.rect)
 
-    def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no, mode='view'):
+    def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no,
+                            mode='view'):
         running = True
         clock = pygame.time.Clock()
         pygame.init()
         pygame.display.set_caption("Environment Generator")
         frames = 1500
         score = 0
+        f_once = mode == 'view'
         while running:
-            self._screen.fill((30, 30, 30))
-            self.draw_model()
+            if f_once:
+                self._screen.fill((30, 30, 30))
+                self.draw_model()
+                f_once = False
+            elif mode == "generate":
+                self._screen.fill((30, 30, 30))
+                self.draw_model()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -2187,7 +2194,7 @@ class Environment_Generation:
 
             serialized_environment["R" + str(room.index)] = serialized_room
 
-        with open('./environments/environment ' + str(
+        with open('./environments/_environment ' + str(
                 str(datetime.datetime.now().year) + '-' + str(datetime.datetime.now().month) + '-' + str(
                     datetime.datetime.now().day) + " " + str(datetime.datetime.now().hour) + "-" + str(
                     datetime.datetime.now().minute) + "-" + str(datetime.datetime.now().second)) + ".json",
