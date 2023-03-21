@@ -33,7 +33,9 @@ class Environment_Generation:
             print("CLPR loaded.")
 
     def generate_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
-        self.generate_rooms_and_doors(bathroom_no, bedroom_no, kitchen_no, hall_no)
+        floor_pos, door_pos_x, door_pos_y = random.random(), random.random(), random.random()
+        self.generate_rooms_and_doors(bathroom_no, bedroom_no, kitchen_no, hall_no,
+                                      floor_pos, door_pos_x, door_pos_y)
         for bathroom in self.get_rooms(flag='bathroom'):
             self.populate_bathroom(bathroom, random.randint(0, 1), random.randint(0, 1), random.randint(0, 1))
         for bedroom in self.get_rooms(flag='bedroom'):
@@ -240,7 +242,9 @@ class Environment_Generation:
         self._floor = Game_Object(0, 0, 0, 0, 0, 'floor')
         self._rooms = []
 
-    def generate_rooms_and_doors(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
+    def generate_rooms_and_doors(self, bathroom_no, bedroom_no,
+                                 kitchen_no, hall_no,
+                                 floor_pos, door_pos_x, door_pos_y):
         room_number = bedroom_no + kitchen_no + bathroom_no + hall_no
         room_distance_threshold = 10.0 + 3 * room_number
         self._env_width = self._env_width + (8.0 * room_number * self._multiplier)
@@ -256,10 +260,10 @@ class Environment_Generation:
         self.make_rooms(room_number, room_type, query_out)
         self._prolog.retract(predicate_head + predicate_body)
         barycenter = self.make_barycenter()
-        self.make_floor(barycenter)
-        self.make_doors(barycenter, random.random(), random.random())
+        self.make_floor(barycenter, floor_pos)
+        self.make_doors(barycenter)
 
-    def make_doors(self, barycenter, door_pos_x, door_pos_y):
+    def make_doors(self, barycenter):
         for room in self._rooms:
             side1 = (room.vertex1, room.vertex4)
             side2 = (room.vertex1, room.vertex2)
@@ -280,7 +284,7 @@ class Environment_Generation:
                 constraints_satisfied = False
                 door_y = 0
                 while not constraints_satisfied:
-                    door_y = door_pos_y * (room.height - 2.5 * self._multiplier) + room.y
+                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
                     if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
                         constraints_satisfied = True
                 door_sprite = pygame.sprite.Sprite()
@@ -292,8 +296,9 @@ class Environment_Generation:
 
             elif min_distance == side_distance2:
                 constraints_satisfied = False
+                door_x = 0
                 while not constraints_satisfied:
-                    door_x = door_pos_x * (room.width - 2.5 * self._multiplier) + room.x
+                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
                     if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
                         constraints_satisfied = True
                 door_sprite = pygame.sprite.Sprite()
@@ -306,10 +311,12 @@ class Environment_Generation:
 
             elif min_distance == side_distance3:
                 constraints_satisfied = False
+                door_y = 0
                 while not constraints_satisfied:
                     door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
                     if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
                         constraints_satisfied = True
+
                 door_sprite = pygame.sprite.Sprite()
                 door_sprite.image = self._type_to_sprite['door']
                 door_sprite.image = pygame.transform.scale(door_sprite.image,
@@ -318,6 +325,7 @@ class Environment_Generation:
                 room.door = Game_Object(room.x + room.width, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
             else:
                 constraints_satisfied = False
+                door_x = 0
                 while not constraints_satisfied:
                     door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
                     if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
@@ -330,7 +338,7 @@ class Environment_Generation:
                                                             int(1.0 * self._multiplier)))
                 room.door = Game_Object(door_x, room.y, 2.5 * self._multiplier, 0, door_sprite, 'door')
 
-    def make_floor(self, barycenter):
+    def make_floor(self, barycenter, floor_pos):
         vertexes_xs = []
         vertexes_ys = []
         for room in self._rooms:
@@ -357,7 +365,7 @@ class Environment_Generation:
             else:
                 vertexes_xs.append(room.vertex4.x)
                 vertexes_ys.append(room.vertex4.y)
-        space_multiplier = (random.random() * 3 + 3) * self._multiplier
+        space_multiplier = (floor_pos * 3 + 3) * self._multiplier
         floor_sprite = pygame.sprite.Sprite()
         floor_sprite.image = self._type_to_sprite['floor']
         floor_sprite.image = pygame.transform.scale(floor_sprite.image, (
