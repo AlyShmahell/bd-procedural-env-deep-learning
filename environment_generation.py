@@ -33,7 +33,7 @@ class Environment_Generation:
             print("CLPR loaded.")
 
     def generate_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
-        self.generate_rooms_doors(bathroom_no, bedroom_no, kitchen_no, hall_no)
+        self.generate_rooms_and_doors(bathroom_no, bedroom_no, kitchen_no, hall_no)
         for bathroom in self.get_rooms(flag='bathroom'):
             self.populate_bathroom(bathroom, random.randint(0, 1), random.randint(0, 1), random.randint(0, 1))
         for bedroom in self.get_rooms(flag='bedroom'):
@@ -240,7 +240,7 @@ class Environment_Generation:
         self._floor = Game_Object(0, 0, 0, 0, 0, 'floor')
         self._rooms = []
 
-    def generate_rooms_doors(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
+    def generate_rooms_and_doors(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
         room_number = bedroom_no + kitchen_no + bathroom_no + hall_no
         room_distance_threshold = 10.0 + 3 * room_number
         self._env_width = self._env_width + (8.0 * room_number * self._multiplier)
@@ -254,62 +254,12 @@ class Environment_Generation:
         self._prolog.assertz(predicate_head + predicate_body)
         query_out = self._prolog.query(query)
         self.make_rooms(room_number, room_type, query_out)
-
         self._prolog.retract(predicate_head + predicate_body)
-        barycenter_x = 0
-        barycenter_y = 0
+        barycenter = self.make_barycenter()
+        self.make_floor(barycenter)
+        self.make_doors(barycenter)
 
-        for room in self._rooms:
-            barycenter_x += room.x + room.width / 2
-            barycenter_y += room.y + room.height / 2
-
-        barycenter_x /= len(self._rooms)
-        barycenter_y /= len(self._rooms)
-        barycenter = Vertex(barycenter_x, barycenter_y)
-
-        vertexes_xs = []
-        vertexes_ys = []
-
-        for room in self._rooms:
-            vertex1_distance = math.sqrt(
-                (room.vertex1.x - barycenter.x) ** 2 + (room.vertex1.y - barycenter.y) ** 2)
-            vertex2_distance = math.sqrt(
-                (room.vertex2.x - barycenter.x) ** 2 + (room.vertex2.y - barycenter.y) ** 2)
-            vertex3_distance = math.sqrt(
-                (room.vertex3.x - barycenter.x) ** 2 + (room.vertex3.y - barycenter.y) ** 2)
-            vertex4_distance = math.sqrt(
-                (room.vertex4.x - barycenter.x) ** 2 + (room.vertex4.y - barycenter.y) ** 2)
-
-            min_distance = min(vertex1_distance, vertex2_distance, vertex3_distance, vertex4_distance)
-
-            if min_distance == vertex1_distance:
-                vertexes_xs.append(room.vertex1.x)
-                vertexes_ys.append(room.vertex1.y)
-            elif min_distance == vertex2_distance:
-                vertexes_xs.append(room.vertex2.x)
-                vertexes_ys.append(room.vertex2.y)
-            elif min_distance == vertex3_distance:
-                vertexes_xs.append(room.vertex3.x)
-                vertexes_ys.append(room.vertex3.y)
-            else:
-                vertexes_xs.append(room.vertex4.x)
-                vertexes_ys.append(room.vertex4.y)
-
-        space_multiplier = (random.random() * 3 + 3) * self._multiplier
-        floor_sprite = pygame.sprite.Sprite()
-        floor_sprite.image = self._type_to_sprite['floor']
-        floor_sprite.image = pygame.transform.scale(floor_sprite.image, (
-            int(max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2),
-            int(max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)))
-        floor_sprite.rect = pygame.Rect(min(vertexes_xs) - space_multiplier,
-                                        min(vertexes_ys) - space_multiplier,
-                                        max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
-                                        max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)
-        self._floor = Game_Object(min(vertexes_xs) - space_multiplier, min(vertexes_ys) - space_multiplier,
-                                  max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
-                                  max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2,
-                                  floor_sprite, 'floor')
-
+    def make_doors(self, barycenter):
         for room in self._rooms:
             side1 = (room.vertex1, room.vertex4)
             side2 = (room.vertex1, room.vertex2)
@@ -379,7 +329,58 @@ class Environment_Generation:
                                                             int(1.0 * self._multiplier)))
                 room.door = Game_Object(door_x, room.y, 2.5 * self._multiplier, 0, door_sprite, 'door')
 
-        return self._rooms
+    def make_floor(self, barycenter):
+        vertexes_xs = []
+        vertexes_ys = []
+        for room in self._rooms:
+            vertex1_distance = math.sqrt(
+                (room.vertex1.x - barycenter.x) ** 2 + (room.vertex1.y - barycenter.y) ** 2)
+            vertex2_distance = math.sqrt(
+                (room.vertex2.x - barycenter.x) ** 2 + (room.vertex2.y - barycenter.y) ** 2)
+            vertex3_distance = math.sqrt(
+                (room.vertex3.x - barycenter.x) ** 2 + (room.vertex3.y - barycenter.y) ** 2)
+            vertex4_distance = math.sqrt(
+                (room.vertex4.x - barycenter.x) ** 2 + (room.vertex4.y - barycenter.y) ** 2)
+
+            min_distance = min(vertex1_distance, vertex2_distance, vertex3_distance, vertex4_distance)
+
+            if min_distance == vertex1_distance:
+                vertexes_xs.append(room.vertex1.x)
+                vertexes_ys.append(room.vertex1.y)
+            elif min_distance == vertex2_distance:
+                vertexes_xs.append(room.vertex2.x)
+                vertexes_ys.append(room.vertex2.y)
+            elif min_distance == vertex3_distance:
+                vertexes_xs.append(room.vertex3.x)
+                vertexes_ys.append(room.vertex3.y)
+            else:
+                vertexes_xs.append(room.vertex4.x)
+                vertexes_ys.append(room.vertex4.y)
+        space_multiplier = (random.random() * 3 + 3) * self._multiplier
+        floor_sprite = pygame.sprite.Sprite()
+        floor_sprite.image = self._type_to_sprite['floor']
+        floor_sprite.image = pygame.transform.scale(floor_sprite.image, (
+            int(max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2),
+            int(max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)))
+        floor_sprite.rect = pygame.Rect(min(vertexes_xs) - space_multiplier,
+                                        min(vertexes_ys) - space_multiplier,
+                                        max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
+                                        max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)
+        self._floor = Game_Object(min(vertexes_xs) - space_multiplier, min(vertexes_ys) - space_multiplier,
+                                  max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
+                                  max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2,
+                                  floor_sprite, 'floor')
+
+    def make_barycenter(self):
+        barycenter_x = 0
+        barycenter_y = 0
+        for room in self._rooms:
+            barycenter_x += room.x + room.width / 2
+            barycenter_y += room.y + room.height / 2
+        barycenter_x /= len(self._rooms)
+        barycenter_y /= len(self._rooms)
+        barycenter = Vertex(barycenter_x, barycenter_y)
+        return barycenter
 
     def make_rooms(self, room_number, room_type, query_out):
         self._rooms = []
