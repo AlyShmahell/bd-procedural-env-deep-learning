@@ -12,24 +12,24 @@ class Environment_Generation:
     """Class to generate environment"""
 
     def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
-        self.type_to_sprite = None
-        self.env_width = env_width * multiplier
-        self.env_height = env_height * multiplier
-        self.multiplier = multiplier
-        self.checker = Check_Collisions()
-        self.prolog = Prolog()
-        self.fake_collision_mt = fake_collision_mt
-        self.door_fake_collision_mt = door_fake_collision_mt
-        self.floor = Game_Object(0, 0, 0, 0, 0, 'floor')
-        self.agent = Agent(9999, 9999, 8, 8, 0, 'agent', 90)
-        self.objective = Game_Object(9800, 9800, 15, 15, 0, 'objective')
-        self.objective_position = [(270, 190), (250, 325), (110, 290), (160, 170), (160, 240), (220, 240), (230, 280),
-                                   (170, 320)]
-        self.rooms = []
+        self._type_to_sprite = None
+        self._env_width = env_width * multiplier
+        self._env_height = env_height * multiplier
+        self._multiplier = multiplier
+        self._checker = Check_Collisions()
+        self._prolog = Prolog()
+        self._fake_collision_mt = fake_collision_mt
+        self._door_fake_collision_mt = door_fake_collision_mt
+        self._floor = Game_Object(0, 0, 0, 0, 0, 'floor')
+        self._agent = Agent(9999, 9999, 8, 8, 0, 'agent', 90)
+        self._objective = Game_Object(9800, 9800, 15, 15, 0, 'objective')
+        self._objective_position = [(270, 190), (250, 325), (110, 290), (160, 170), (160, 240), (220, 240), (230, 280),
+                                    (170, 320)]
+        self._rooms = []
 
         prolog_query = "use_module(library(clpr))"
 
-        for solution in self.prolog.query(prolog_query):
+        for solution in self._prolog.query(prolog_query):
             print("CLPR loaded.")
 
     def generate_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
@@ -44,22 +44,22 @@ class Environment_Generation:
             self.populate_hall(hall, random.randint(0, 1), random.randint(0, 2), random.randint(0, 2), 1.0)
 
     def draw_model(self):
-        if len(self.rooms) > 1:
-            self.screen.blit(self.floor.sprite.image, self.floor.sprite.rect)
-            pygame.draw.rect(self.screen, (255, 255, 255), self.floor.sprite.rect, 2)
+        if len(self._rooms) > 1:
+            self.screen.blit(self._floor.sprite.image, self._floor.sprite.rect)
+            pygame.draw.rect(self.screen, (255, 255, 255), self._floor.sprite.rect, 2)
 
-        for room in self.rooms:
+        for room in self._rooms:
             self.screen.blit(room.sprite.image, room.sprite.rect)
             pygame.draw.rect(self.screen, (255, 255, 255), room.sprite.rect, 2)
 
             if room.door.width == 0:
-                blitRect = pygame.Rect(room.door.x - 0.5 * self.multiplier, room.door.y, 1.0 * self.multiplier,
+                blitRect = pygame.Rect(room.door.x - 0.5 * self._multiplier, room.door.y, 1.0 * self._multiplier,
                                        room.door.height)
                 self.screen.blit(room.door.sprite.image, blitRect)
                 room.door.sprite.rect = blitRect
             else:
-                blitRect = pygame.Rect(room.door.x, room.door.y - 0.5 * self.multiplier, room.door.width,
-                                       1.0 * self.multiplier)
+                blitRect = pygame.Rect(room.door.x, room.door.y - 0.5 * self._multiplier, room.door.width,
+                                       1.0 * self._multiplier)
                 self.screen.blit(room.door.sprite.image, blitRect)
                 room.door.sprite.rect = blitRect
 
@@ -67,16 +67,16 @@ class Environment_Generation:
                 self.screen.blit(room_child.sprite.image, room_child.sprite.rect)
                 for child in room_child.children:
                     self.screen.blit(child.sprite.image, child.sprite.rect)
-        if self.agent.targetRot - self.agent.rot != 0:
-            self.agent.image = pygame.transform.rotate(self.agent.sprite.image, self.agent.targetRot - 90)
-            old_center = self.agent.sprite.rect.center
-            self.agent.sprite.rect = self.agent.image.get_rect()
-            self.agent.sprite.rect.center = old_center
-            self.agent.rot = self.agent.targetRot
-        self.agent.sprite.rect.x = self.agent.x
-        self.agent.sprite.rect.y = self.agent.y
-        self.screen.blit(self.agent.image, self.agent.sprite.rect)
-        self.screen.blit(self.objective.sprite.image, self.objective.sprite.rect)
+        if self._agent.targetRot - self._agent.rot != 0:
+            self._agent.image = pygame.transform.rotate(self._agent.sprite.image, self._agent.targetRot - 90)
+            old_center = self._agent.sprite.rect.center
+            self._agent.sprite.rect = self._agent.image.get_rect()
+            self._agent.sprite.rect.center = old_center
+            self._agent.rot = self._agent.targetRot
+        self._agent.sprite.rect.x = self._agent.x
+        self._agent.sprite.rect.y = self._agent.y
+        self.screen.blit(self._agent.image, self._agent.sprite.rect)
+        self.screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
 
     def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no, mode='view'):
         running = True
@@ -112,39 +112,39 @@ class Environment_Generation:
                                           hall_no)
                 self.draw_model()
             if pressed[pygame.K_UP] and pressed[pygame.K_RIGHT]:
-                self.agent.targetRot = 45
-                self.agent.x += 2
-                self.agent.y -= 2
+                self._agent.targetRot = 45
+                self._agent.x += 2
+                self._agent.y -= 2
             elif pressed[pygame.K_UP] and pressed[pygame.K_LEFT]:
-                self.agent.targetRot = 135
-                self.agent.x -= 2
-                self.agent.y -= 2
+                self._agent.targetRot = 135
+                self._agent.x -= 2
+                self._agent.y -= 2
             elif pressed[pygame.K_DOWN] and pressed[pygame.K_RIGHT]:
-                self.agent.targetRot = 315
-                self.agent.x += 2
-                self.agent.y += 2
+                self._agent.targetRot = 315
+                self._agent.x += 2
+                self._agent.y += 2
             elif pressed[pygame.K_DOWN] and pressed[pygame.K_LEFT]:
-                self.agent.targetRot = 225
-                self.agent.x -= 2
-                self.agent.y += 2
+                self._agent.targetRot = 225
+                self._agent.x -= 2
+                self._agent.y += 2
             elif pressed[pygame.K_UP]:
-                self.agent.targetRot = 90
-                self.agent.y -= 2
+                self._agent.targetRot = 90
+                self._agent.y -= 2
             elif pressed[pygame.K_DOWN]:
-                self.agent.targetRot = 270
-                self.agent.y += 2
+                self._agent.targetRot = 270
+                self._agent.y += 2
             elif pressed[pygame.K_LEFT]:
-                self.agent.targetRot = 180
-                self.agent.x -= 2
+                self._agent.targetRot = 180
+                self._agent.x -= 2
             elif pressed[pygame.K_RIGHT]:
-                self.agent.targetRot = 0
-                self.agent.x += 2
+                self._agent.targetRot = 0
+                self._agent.x += 2
 
             elif pressed[pygame.K_SPACE]:
                 angle_range = 120
                 step = 3
-                eye_point = self.agent.sprite.rect.center
-                slope = (self.agent.targetRot + angle_range / 2) % 360
+                eye_point = self._agent.sprite.rect.center
+                slope = (self._agent.targetRot + angle_range / 2) % 360
                 test_distances = []
                 for i in range(0, angle_range, step):
                     x = math.cos(math.radians(slope)) * 220
@@ -153,37 +153,37 @@ class Environment_Generation:
                     slope = (slope - step) % 360
                     intersection_points = []
                     intersection_points_distances = []
-                    for room in self.rooms:
-                        intersection_point = self.checker.check_line_room_collision(
+                    for room in self._rooms:
+                        intersection_point = self._checker.check_line_room_collision(
                             (eye_point[0], eye_point[1], view_point[0], view_point[1]), room)
                         if intersection_point is not None:
                             intersection_points.append(intersection_point)
                         for room_child in room.children:
-                            intersection_point = self.checker.check_line_rect_collision(
+                            intersection_point = self._checker.check_line_rect_collision(
                                 (eye_point[0], eye_point[1], view_point[0], view_point[1]), room_child.sprite.rect)
                             if intersection_point is not None:
                                 intersection_points.append(intersection_point)
                             for child in room_child.children:
-                                intersection_point = self.checker.check_line_rect_collision(
+                                intersection_point = self._checker.check_line_rect_collision(
                                     (eye_point[0], eye_point[1], view_point[0], view_point[1]), child.sprite.rect)
                                 if intersection_point is not None:
                                     intersection_points.append(intersection_point)
-                    intersection_point_floor = self.checker.check_line_rect_collision(
-                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self.floor.sprite.rect)
+                    intersection_point_floor = self._checker.check_line_rect_collision(
+                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._floor.sprite.rect)
                     if intersection_point_floor is not None:
                         any_room_contains_point = False
-                        for room in self.rooms:
-                            if self.checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
+                        for room in self._rooms:
+                            if self._checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
                                 any_room_contains_point = True
                                 break
                         if not any_room_contains_point:
                             intersection_points.append(intersection_point_floor)
-                    intersection_point_objective = self.checker.check_line_rect_collision(
-                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self.objective.sprite.rect)
+                    intersection_point_objective = self._checker.check_line_rect_collision(
+                        (eye_point[0], eye_point[1], view_point[0], view_point[1]), self._objective.sprite.rect)
                     if intersection_point_objective is not None:
                         intersection_points.append(intersection_point_objective)
                     for point in intersection_points:
-                        intersection_points_distances.append(self.checker.point_point_distance(eye_point, point))
+                        intersection_points_distances.append(self._checker.point_point_distance(eye_point, point))
                     if len(intersection_points) > 0:
                         test_distances.append(min(intersection_points_distances) / 220)
                         chosen_index = np.argmin(intersection_points_distances)
@@ -192,7 +192,7 @@ class Environment_Generation:
                             pygame.draw.circle(self.screen, (255, 0, 0), chosen_point, 2)
                 if min(test_distances) < 0.049:
                     print("activation avoidance")
-            if self.agent.sprite.rect.colliderect(self.objective.sprite.rect):
+            if self._agent.sprite.rect.colliderect(self._objective.sprite.rect):
                 self.reset_objective()
                 score += 1
             pygame.display.update()
@@ -204,32 +204,32 @@ class Environment_Generation:
         pygame.display.quit()
 
     def reset_objective(self):
-        random_next_x = self.objective.sprite.rect.x
-        random_next_y = self.objective.sprite.rect.y
-        while random_next_x == self.objective.sprite.rect.x and random_next_y == self.objective.sprite.rect.y:
-            random_next_position = self.objective_position[random.randrange(0, len(self.objective_position))]
+        random_next_x = self._objective.sprite.rect.x
+        random_next_y = self._objective.sprite.rect.y
+        while random_next_x == self._objective.sprite.rect.x and random_next_y == self._objective.sprite.rect.y:
+            random_next_position = self._objective_position[random.randrange(0, len(self._objective_position))]
             random_next_x = random_next_position[0]
             random_next_y = random_next_position[1]
-        self.objective.sprite.rect.x = random_next_x
-        self.objective.sprite.rect.y = random_next_y
+        self._objective.sprite.rect.x = random_next_x
+        self._objective.sprite.rect.y = random_next_y
 
     def reset(self):
-        self.env_width = 15.0 * self.multiplier
-        self.env_height = 15.0 * self.multiplier
-        self.floor = Game_Object(0, 0, 0, 0, 0, 'floor')
-        self.rooms = []
+        self._env_width = 15.0 * self._multiplier
+        self._env_height = 15.0 * self._multiplier
+        self._floor = Game_Object(0, 0, 0, 0, 0, 'floor')
+        self._rooms = []
 
     def generate_rooms_doors(self, bathroom_no, bedroom_no, kitchen_no, hall_no):
         room_number = bedroom_no + kitchen_no + bathroom_no + hall_no
         room_distance_threshold = 10.0 + 3 * room_number
-        self.env_width = self.env_width + (8.0 * room_number * self.multiplier)
-        self.env_height = self.env_height + (8.0 * room_number * self.multiplier)
-        self.screen = pygame.display.set_mode((int(self.env_width), int(self.env_height)))
+        self._env_width = self._env_width + (8.0 * room_number * self._multiplier)
+        self._env_height = self._env_height + (8.0 * room_number * self._multiplier)
+        self.screen = pygame.display.set_mode((int(self._env_width), int(self._env_height)))
         self.makes_sprites()
 
         head_variables = ""
         predicate_head = "generateEnvironment(EnvWidth, EnvHeight, "
-        query_start = "generateEnvironment(" + str(self.env_width) + ", " + str(self.env_height) + ", "
+        query_start = "generateEnvironment(" + str(self._env_width) + ", " + str(self._env_height) + ", "
         for i in range(0, room_number):
             head_variables += "R" + str(i) + "X" + ", "
             head_variables += "R" + str(i) + "Y" + ", "
@@ -254,37 +254,37 @@ class Environment_Generation:
 
         for i in range(0, room_number):
             if room_type[i] == 'bedroom':
-                predicate_body += "random(" + str(12.0 * self.multiplier) + ", " + str(
-                    17.0 * self.multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(12.0 * self.multiplier) + ", " + str(
-                    17.0 * self.multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
+                    17.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(12.0 * self._multiplier) + ", " + str(
+                    17.0 * self._multiplier) + ", R" + str(i) + "H), "
                 predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
                     i) + ", R" + str(i) + "X), "
                 predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
                     i) + ", R" + str(i) + "Y), "
             if room_type[i] == 'bathroom':
-                predicate_body += "random(" + str(8.0 * self.multiplier) + ", " + str(
-                    12.0 * self.multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(8.0 * self.multiplier) + ", " + str(
-                    12.0 * self.multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "random(" + str(8.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(8.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", R" + str(i) + "H), "
                 predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
                     i) + ", R" + str(i) + "X), "
                 predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
                     i) + ", R" + str(i) + "Y), "
             if room_type[i] == 'kitchen':
-                predicate_body += "random(" + str(10.0 * self.multiplier) + ", " + str(
-                    15.0 * self.multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(10.0 * self.multiplier) + ", " + str(
-                    15.0 * self.multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "random(" + str(10.0 * self._multiplier) + ", " + str(
+                    15.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(10.0 * self._multiplier) + ", " + str(
+                    15.0 * self._multiplier) + ", R" + str(i) + "H), "
                 predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
                     i) + ", R" + str(i) + "X), "
                 predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
                     i) + ", R" + str(i) + "Y), "
             if room_type[i] == 'hall':
-                predicate_body += "random(" + str(15.0 * self.multiplier) + ", " + str(
-                    20.0 * self.multiplier) + ", R" + str(i) + "W), "
-                predicate_body += "random(" + str(15.0 * self.multiplier) + ", " + str(
-                    20.0 * self.multiplier) + ", R" + str(i) + "H), "
+                predicate_body += "random(" + str(15.0 * self._multiplier) + ", " + str(
+                    20.0 * self._multiplier) + ", R" + str(i) + "W), "
+                predicate_body += "random(" + str(15.0 * self._multiplier) + ", " + str(
+                    20.0 * self._multiplier) + ", R" + str(i) + "H), "
                 predicate_body += "WSUB" + str(i) + " is EnvWidth - R" + str(i) + "W, random(0.0, WSUB" + str(
                     i) + ", R" + str(i) + "X), "
                 predicate_body += "HSUB" + str(i) + " is EnvHeight - R" + str(i) + "H, random(0.0, HSUB" + str(
@@ -293,11 +293,11 @@ class Environment_Generation:
         for i in range(0, room_number):
             for j in range(i + 1, room_number):
                 predicate_body += "{(R" + str(i) + "X + R" + str(i) + "W + " + str(
-                    self.fake_collision_mt * self.multiplier) + " =< R" + str(j) + "X ; R" + str(j) + "X + R" + str(
-                    j) + "W + " + str(self.fake_collision_mt * self.multiplier) + " =< R" + str(i) + "X) ; (R" + str(
-                    i) + "Y + R" + str(i) + "H + " + str(self.fake_collision_mt * self.multiplier) + " =< R" + str(
+                    self._fake_collision_mt * self._multiplier) + " =< R" + str(j) + "X ; R" + str(j) + "X + R" + str(
+                    j) + "W + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "X) ; (R" + str(
+                    i) + "Y + R" + str(i) + "H + " + str(self._fake_collision_mt * self._multiplier) + " =< R" + str(
                     j) + "Y ; R" + str(j) + "Y + R" + str(j) + "H + " + str(
-                    self.fake_collision_mt * self.multiplier) + " =< R" + str(i) + "Y)}, "
+                    self._fake_collision_mt * self._multiplier) + " =< R" + str(i) + "Y)}, "
 
         if room_number > 1:
             predicate_body += "CentreX is ("
@@ -316,33 +316,33 @@ class Environment_Generation:
                 predicate_body += "sqrt(((R" + str(i) + "X + R" + str(i) + "W/2) - (CentreX))^2 + ((R" + str(
                     i) + "Y + R" + str(i) + "H/2) - (CentreY))^2), "
                 predicate_body += "{DistanceRoom" + str(i) + " =< " + str(
-                    room_distance_threshold * self.multiplier) + "}, "
+                    room_distance_threshold * self._multiplier) + "}, "
 
         predicate_body = predicate_body[:-2]
         predicate_body += ", !"
         print((predicate_head + predicate_body))
-        self.prolog.assertz(predicate_head + predicate_body)
+        self._prolog.assertz(predicate_head + predicate_body)
 
         prolog_query = query
         rooms = []
 
-        for sol in self.prolog.query(prolog_query):
+        for sol in self._prolog.query(prolog_query):
             for i in range(0, room_number):
                 room_sprite = pygame.sprite.Sprite()
                 if room_type[i] == 'bathroom':
-                    room_sprite.image = pygame.transform.scale(self.type_to_sprite['bathroom'],
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bathroom'],
                                                                (int(sol["R" + str(i) + "W"]),
                                                                 int(sol["R" + str(i) + "H"])))
                 elif room_type[i] == 'kitchen':
-                    room_sprite.image = pygame.transform.scale(self.type_to_sprite['kitchen'],
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['kitchen'],
                                                                (int(sol["R" + str(i) + "W"]),
                                                                 int(sol["R" + str(i) + "H"])))
                 elif room_type[i] == 'bedroom':
-                    room_sprite.image = pygame.transform.scale(self.type_to_sprite['bedroom'],
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['bedroom'],
                                                                (int(sol["R" + str(i) + "W"]),
                                                                 int(sol["R" + str(i) + "H"])))
                 else:
-                    room_sprite.image = pygame.transform.scale(self.type_to_sprite['hall'],
+                    room_sprite.image = pygame.transform.scale(self._type_to_sprite['hall'],
                                                                (int(sol["R" + str(i) + "W"]),
                                                                 int(sol["R" + str(i) + "H"])))
 
@@ -357,23 +357,23 @@ class Environment_Generation:
                 room.vertex4 = Vertex(room.x, room.y)
                 rooms.append(room)
 
-        self.rooms = rooms
-        self.prolog.retract(predicate_head + predicate_body)
+        self._rooms = rooms
+        self._prolog.retract(predicate_head + predicate_body)
         barycenter_x = 0
         barycenter_y = 0
 
-        for room in self.rooms:
+        for room in self._rooms:
             barycenter_x += room.x + room.width / 2
             barycenter_y += room.y + room.height / 2
 
-        barycenter_x /= len(self.rooms)
-        barycenter_y /= len(self.rooms)
+        barycenter_x /= len(self._rooms)
+        barycenter_y /= len(self._rooms)
         barycenter = Vertex(barycenter_x, barycenter_y)
 
         vertexes_xs = []
         vertexes_ys = []
 
-        for room in self.rooms:
+        for room in self._rooms:
             vertex1_distance = math.sqrt(
                 (room.vertex1.x - barycenter.x) ** 2 + (room.vertex1.y - barycenter.y) ** 2)
             vertex2_distance = math.sqrt(
@@ -398,9 +398,9 @@ class Environment_Generation:
                 vertexes_xs.append(room.vertex4.x)
                 vertexes_ys.append(room.vertex4.y)
 
-        space_multiplier = (random.random() * 3 + 3) * self.multiplier
+        space_multiplier = (random.random() * 3 + 3) * self._multiplier
         floor_sprite = pygame.sprite.Sprite()
-        floor_sprite.image = self.type_to_sprite['floor']
+        floor_sprite.image = self._type_to_sprite['floor']
         floor_sprite.image = pygame.transform.scale(floor_sprite.image, (
             int(max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2),
             int(max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)))
@@ -408,12 +408,12 @@ class Environment_Generation:
                                         min(vertexes_ys) - space_multiplier,
                                         max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
                                         max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2)
-        self.floor = Game_Object(min(vertexes_xs) - space_multiplier, min(vertexes_ys) - space_multiplier,
-                                 max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
-                                 max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2,
-                                 floor_sprite, 'floor')
+        self._floor = Game_Object(min(vertexes_xs) - space_multiplier, min(vertexes_ys) - space_multiplier,
+                                  max(vertexes_xs) - min(vertexes_xs) + space_multiplier * 2,
+                                  max(vertexes_ys) - min(vertexes_ys) + space_multiplier * 2,
+                                  floor_sprite, 'floor')
 
-        for room in self.rooms:
+        for room in self._rooms:
             side1 = (room.vertex1, room.vertex4)
             side2 = (room.vertex1, room.vertex2)
             side3 = (room.vertex2, room.vertex3)
@@ -432,95 +432,95 @@ class Environment_Generation:
             if min_distance == side_distance1:
                 constraints_satisfied = False
                 while not constraints_satisfied:
-                    door_y = random.random() * (room.height - 2.5 * self.multiplier) + room.y
-                    if door_y >= self.floor.y and door_y + 2.5 * self.multiplier <= self.floor.y + self.floor.height:
+                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
+                    if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
                         constraints_satisfied = True
                 door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self.type_to_sprite['door']
+                door_sprite.image = self._type_to_sprite['door']
                 door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(1.0 * self.multiplier),
-                                                            int(2.5 * self.multiplier)))
-                room.door = Game_Object(room.x, door_y, 0, 2.5 * self.multiplier, door_sprite, 'door')
+                                                           (int(1.0 * self._multiplier),
+                                                            int(2.5 * self._multiplier)))
+                room.door = Game_Object(room.x, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
 
             elif min_distance == side_distance2:
                 constraints_satisfied = False
                 while not constraints_satisfied:
-                    door_x = random.random() * (room.width - 2.5 * self.multiplier) + room.x
-                    if door_x >= self.floor.x and door_x + 2.5 * self.multiplier <= self.floor.x + self.floor.width:
+                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
+                    if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
                         constraints_satisfied = True
                 door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self.type_to_sprite['door']
+                door_sprite.image = self._type_to_sprite['door']
                 door_sprite.image = pygame.transform.rotate(door_sprite.image, 90)
                 door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(2.5 * self.multiplier),
-                                                            int(1.0 * self.multiplier)))
-                room.door = Game_Object(door_x, room.y + room.height, 2.5 * self.multiplier, 0, door_sprite, 'door')
+                                                           (int(2.5 * self._multiplier),
+                                                            int(1.0 * self._multiplier)))
+                room.door = Game_Object(door_x, room.y + room.height, 2.5 * self._multiplier, 0, door_sprite, 'door')
 
             elif min_distance == side_distance3:
                 constraints_satisfied = False
                 while not constraints_satisfied:
-                    door_y = random.random() * (room.height - 2.5 * self.multiplier) + room.y
-                    if door_y >= self.floor.y and door_y + 2.5 * self.multiplier <= self.floor.y + self.floor.height:
+                    door_y = random.random() * (room.height - 2.5 * self._multiplier) + room.y
+                    if door_y >= self._floor.y and door_y + 2.5 * self._multiplier <= self._floor.y + self._floor.height:
                         constraints_satisfied = True
                 door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self.type_to_sprite['door']
+                door_sprite.image = self._type_to_sprite['door']
                 door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(1.0 * self.multiplier),
-                                                            int(2.5 * self.multiplier)))
-                room.door = Game_Object(room.x + room.width, door_y, 0, 2.5 * self.multiplier, door_sprite, 'door')
+                                                           (int(1.0 * self._multiplier),
+                                                            int(2.5 * self._multiplier)))
+                room.door = Game_Object(room.x + room.width, door_y, 0, 2.5 * self._multiplier, door_sprite, 'door')
             else:
                 constraints_satisfied = False
                 while not constraints_satisfied:
-                    door_x = random.random() * (room.width - 2.5 * self.multiplier) + room.x
-                    if door_x >= self.floor.x and door_x + 2.5 * self.multiplier <= self.floor.x + self.floor.width:
+                    door_x = random.random() * (room.width - 2.5 * self._multiplier) + room.x
+                    if door_x >= self._floor.x and door_x + 2.5 * self._multiplier <= self._floor.x + self._floor.width:
                         constraints_satisfied = True
                 door_sprite = pygame.sprite.Sprite()
-                door_sprite.image = self.type_to_sprite['door']
+                door_sprite.image = self._type_to_sprite['door']
                 door_sprite.image = pygame.transform.rotate(door_sprite.image, 90)
                 door_sprite.image = pygame.transform.scale(door_sprite.image,
-                                                           (int(2.5 * self.multiplier),
-                                                            int(1.0 * self.multiplier)))
-                room.door = Game_Object(door_x, room.y, 2.5 * self.multiplier, 0, door_sprite, 'door')
+                                                           (int(2.5 * self._multiplier),
+                                                            int(1.0 * self._multiplier)))
+                room.door = Game_Object(door_x, room.y, 2.5 * self._multiplier, 0, door_sprite, 'door')
 
         return rooms
 
     def makes_sprites(self):
-        self.type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),
-                                   kitchen=pygame.image.load('textures/kitchen_texture.png').convert_alpha(),
-                                   bedroom=pygame.image.load('textures/bedroom_texture.png').convert_alpha(),
-                                   bathroom=pygame.image.load('textures/bathroom_texture.png').convert_alpha(),
-                                   door=pygame.image.load('textures/door_texture.png').convert_alpha(),
-                                   toilet=pygame.image.load('textures/toilet_texture.png').convert_alpha(),
-                                   shower=pygame.image.load('textures/shower_texture.png').convert_alpha(),
-                                   bed=pygame.image.load('textures/green_bed_texture.png').convert_alpha(),
-                                   bedside=pygame.image.load('textures/bedside_texture.png').convert_alpha(),
-                                   sofa=pygame.image.load('textures/sofa_texture.png').convert_alpha(),
-                                   hall_table=pygame.image.load('textures/hall_table_texture.png').convert_alpha(),
-                                   table=pygame.image.load('textures/table_texture.png').convert_alpha(),
-                                   chair=pygame.image.load('textures/chair_texture.png').convert_alpha(),
-                                   desk=pygame.image.load('textures/desk_texture.png').convert_alpha(),
-                                   sink=pygame.image.load('textures/sink_texture.png').convert_alpha(),
-                                   wardrobe=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
-                                   cupboard=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
-                                   floor=pygame.image.load('textures/floor_texture.png').convert_alpha(),
-                                   agent=pygame.image.load('textures/agent_texture_mockup.png').convert_alpha(),
-                                   objective=pygame.image.load('textures/objective_texture_mockup.png').convert_alpha())
+        self._type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),
+                                    kitchen=pygame.image.load('textures/kitchen_texture.png').convert_alpha(),
+                                    bedroom=pygame.image.load('textures/bedroom_texture.png').convert_alpha(),
+                                    bathroom=pygame.image.load('textures/bathroom_texture.png').convert_alpha(),
+                                    door=pygame.image.load('textures/door_texture.png').convert_alpha(),
+                                    toilet=pygame.image.load('textures/toilet_texture.png').convert_alpha(),
+                                    shower=pygame.image.load('textures/shower_texture.png').convert_alpha(),
+                                    bed=pygame.image.load('textures/green_bed_texture.png').convert_alpha(),
+                                    bedside=pygame.image.load('textures/bedside_texture.png').convert_alpha(),
+                                    sofa=pygame.image.load('textures/sofa_texture.png').convert_alpha(),
+                                    hall_table=pygame.image.load('textures/hall_table_texture.png').convert_alpha(),
+                                    table=pygame.image.load('textures/table_texture.png').convert_alpha(),
+                                    chair=pygame.image.load('textures/chair_texture.png').convert_alpha(),
+                                    desk=pygame.image.load('textures/desk_texture.png').convert_alpha(),
+                                    sink=pygame.image.load('textures/sink_texture.png').convert_alpha(),
+                                    wardrobe=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
+                                    cupboard=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
+                                    floor=pygame.image.load('textures/floor_texture.png').convert_alpha(),
+                                    agent=pygame.image.load('textures/agent_texture_mockup.png').convert_alpha(),
+                                    objective=pygame.image.load('textures/objective_texture_mockup.png').convert_alpha())
         agent_sprite = pygame.sprite.Sprite()
-        agent_sprite.image = pygame.transform.scale(self.type_to_sprite['agent'],
-                                                    (int(self.agent.width), int(self.agent.height)))
-        agent_sprite.rect = pygame.Rect(self.agent.x, self.agent.y, self.agent.width, self.agent.height)
-        self.agent.sprite = agent_sprite
-        self.agent.image = self.agent.sprite.image
+        agent_sprite.image = pygame.transform.scale(self._type_to_sprite['agent'],
+                                                    (int(self._agent.width), int(self._agent.height)))
+        agent_sprite.rect = pygame.Rect(self._agent.x, self._agent.y, self._agent.width, self._agent.height)
+        self._agent.sprite = agent_sprite
+        self._agent.image = self._agent.sprite.image
         objective_sprite = pygame.sprite.Sprite()
-        objective_sprite.image = pygame.transform.scale(self.type_to_sprite['objective'],
-                                                        (int(self.objective.width), int(self.objective.height)))
-        objective_sprite.rect = pygame.Rect(self.objective.x, self.objective.y, self.objective.width,
-                                            self.objective.height)
-        self.objective.sprite = objective_sprite
+        objective_sprite.image = pygame.transform.scale(self._type_to_sprite['objective'],
+                                                        (int(self._objective.width), int(self._objective.height)))
+        objective_sprite.rect = pygame.Rect(self._objective.x, self._objective.y, self._objective.width,
+                                            self._objective.height)
+        self._objective.sprite = objective_sprite
 
     def get_rooms(self, flag):
         result = []
-        for room in (x for x in self.rooms if x.type == flag):
+        for room in (x for x in self._rooms if x.type == flag):
             result.append(room)
         return result
 
@@ -568,7 +568,7 @@ class Environment_Generation:
 
         predicate_body = ":- repeat, "
         predicate_body += "Rwidthbound is RoomWidth + ZeroX, Rheightbound is RoomHeight + ZeroY, random(" + str(
-            1.5 * self.multiplier) + ", " + str(1.8 * self.multiplier) + ", DeskSize), "
+            1.5 * self._multiplier) + ", " + str(1.8 * self._multiplier) + ", DeskSize), "
 
         first_angle, second_angle, third_angle, fourth_angle = [], [], [], []
 
@@ -900,7 +900,7 @@ class Environment_Generation:
                                 fourth_angle.append((i, 1))
                                 positioned = True
 
-        predicate_body += "random(" + str(0.7 * self.multiplier) + ", " + str(1.0 * self.multiplier) + ", ChairSize), "
+        predicate_body += "random(" + str(0.7 * self._multiplier) + ", " + str(1.0 * self._multiplier) + ", ChairSize), "
         for i in range(0, table_no):
             predicate_body += "KTA" + str(i) + "WInfBound is RoomWidth*(1/5), KTA" + str(
                 i) + "WSupBound is RoomWidth*(3/10), random(KTA" + str(i) + "WInfBound, KTA" + str(
@@ -963,28 +963,28 @@ class Environment_Generation:
         for j in range(0, table_no):
             if kitchen.door.width == 0:
                 predicate_body += "{(" + str(
-                    kitchen.door.x + kitchen.door.width + self.door_fake_collision_mt * self.multiplier) + " =< KTA" + str(
+                    kitchen.door.x + kitchen.door.width + self._door_fake_collision_mt * self._multiplier) + " =< KTA" + str(
                     j) + "X - ChairSize ; KTA" + str(j) + "X + KTA" + str(j) + "W + ChairSize =< " + str(
-                    kitchen.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    kitchen.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     kitchen.door.y + kitchen.door.height) + " =< KTA" + str(j) + "Y - ChairSize ; KTA" + str(
                     j) + "Y + KTA" + str(j) + "H + ChairSize =< " + str(kitchen.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(kitchen.door.x + kitchen.door.width) + " =< KTA" + str(
                     j) + "X - ChairSize ; KTA" + str(j) + "X + KTA" + str(j) + "W + ChairSize =< " + str(
                     kitchen.door.x) + ") ; (" + str(
-                    kitchen.door.y + kitchen.door.height + self.door_fake_collision_mt * self.multiplier) + " =< KTA" + str(
+                    kitchen.door.y + kitchen.door.height + self._door_fake_collision_mt * self._multiplier) + " =< KTA" + str(
                     j) + "Y - ChairSize ; KTA" + str(j) + "Y + KTA" + str(j) + "H + ChairSize =< " + str(
-                    kitchen.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    kitchen.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         predicate_body = predicate_body[:-2]
         predicate_body += ", !"
         print("Kitchen predicate is", (predicate_head + predicate_body))
-        self.prolog.assertz(predicate_head + predicate_body)
+        self._prolog.assertz(predicate_head + predicate_body)
 
-        for sol in self.prolog.query(query):
+        for sol in self._prolog.query(query):
             for i in range(0, desk_no):
                 desk_sprite = pygame.sprite.Sprite()
-                desk_sprite.image = self.type_to_sprite['desk']
+                desk_sprite.image = self._type_to_sprite['desk']
                 sprite_orientation = "S"
                 if (i, 0) in first_angle or (i, 0) in second_angle or (i, 0) in third_angle or (i, 0) in fourth_angle:
                     desk_sprite.image = pygame.transform.rotate(desk_sprite.image, 90)
@@ -1000,7 +1000,7 @@ class Environment_Generation:
 
             for i in range(0, table_no):
                 table_sprite = pygame.sprite.Sprite()
-                table_sprite.image = self.type_to_sprite['table']
+                table_sprite.image = self._type_to_sprite['table']
                 table_sprite.image = pygame.transform.scale(table_sprite.image, (
                     int(sol["KTA" + str(i) + "W"]), int(sol["KTA" + str(i) + "H"])))
                 table_sprite.rect = pygame.Rect(sol["KTA" + str(i) + "X"], sol["KTA" + str(i) + "Y"],
@@ -1010,7 +1010,7 @@ class Environment_Generation:
 
                 for j in range(i * 4, i * 4 + 4):
                     chair_sprite = pygame.sprite.Sprite()
-                    chair_sprite.image = self.type_to_sprite['chair']
+                    chair_sprite.image = self._type_to_sprite['chair']
                     chair_sprite.image = pygame.transform.rotate(chair_sprite.image, ((j + 2) % 4) * 90)
                     chair_sprite.image = pygame.transform.scale(chair_sprite.image, (
                         int(sol["C" + str(j) + "W"]), int(sol["C" + str(j) + "H"])))
@@ -1028,7 +1028,7 @@ class Environment_Generation:
                         chair.orientation = "W"
                     table.children.append(chair)
                 kitchen.children.append(table)
-        self.prolog.retract(predicate_head + predicate_body)
+        self._prolog.retract(predicate_head + predicate_body)
 
     def populate_bedroom(self, bedroom, bed_no, wardrobe_no):
         head_variables = ""
@@ -1133,10 +1133,10 @@ class Environment_Generation:
                 if wardrobe_side == 4:
                     side4_sum += 7.5
 
-            side1_sum *= self.multiplier
-            side2_sum *= self.multiplier
-            side3_sum *= self.multiplier
-            side4_sum *= self.multiplier
+            side1_sum *= self._multiplier
+            side2_sum *= self._multiplier
+            side3_sum *= self._multiplier
+            side4_sum *= self._multiplier
 
             if bedroom.door.x == bedroom.x and bedroom.door.width == 0:
                 side1_top = (bedroom.y + bedroom.height) - (bedroom.door.y + bedroom.door.height)
@@ -1167,13 +1167,13 @@ class Environment_Generation:
 
         for i in range(0, bed_no):
             if bed_info[i][0] == 1:
-                predicate_body += "random(" + str(2.0 * self.multiplier) + ", " + str(
-                    3.0 * self.multiplier) + ", B" + str(i) + "W" + "), "
-                predicate_body += "{B" + str(i) + "H = B" + str(i) + "W + " + str(3.0 * self.multiplier) + "}" + ", "
+                predicate_body += "random(" + str(2.0 * self._multiplier) + ", " + str(
+                    3.0 * self._multiplier) + ", B" + str(i) + "W" + "), "
+                predicate_body += "{B" + str(i) + "H = B" + str(i) + "W + " + str(3.0 * self._multiplier) + "}" + ", "
             else:
-                predicate_body += "random(" + str(5.0 * self.multiplier) + ", " + str(
-                    6.0 * self.multiplier) + ", B" + str(i) + "W" + "), "
-                predicate_body += "{B" + str(i) + "H = B" + str(i) + "W - " + str(3.0 * self.multiplier) + "}" + ", "
+                predicate_body += "random(" + str(5.0 * self._multiplier) + ", " + str(
+                    6.0 * self._multiplier) + ", B" + str(i) + "W" + "), "
+                predicate_body += "{B" + str(i) + "H = B" + str(i) + "W - " + str(3.0 * self._multiplier) + "}" + ", "
             if bed_info[i][1] == 1:
                 predicate_body += "{B" + str(i) + "X = ZeroX}, random(ZeroY, Rheightbound, B" + str(i) + "Y" + "), "
             elif bed_info[i][1] == 2:
@@ -1189,43 +1189,43 @@ class Environment_Generation:
             if bed_info[i][1] == 1:
                 if random.randint(1, 2) == 1:
                     predicate_body += "{BS" + str(i) + "X = ZeroX, BS" + str(i) + "Y = B" + str(i) + "Y + B" + str(
-                        i) + "H}, random(" + str(1.5 * self.multiplier) + ", " + str(
-                        2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
+                        i) + "H}, random(" + str(1.5 * self._multiplier) + ", " + str(
+                        2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
                 else:
                     predicate_body += "{BS" + str(i) + "X = ZeroX, BS" + str(i) + "Y + BS" + str(i) + "H = B" + str(
-                        i) + "Y}, random(" + str(1.5 * self.multiplier) + ", " + str(
-                        2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
+                        i) + "Y}, random(" + str(1.5 * self._multiplier) + ", " + str(
+                        2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
             elif bed_info[i][1] == 2:
                 if random.randint(1, 2) == 1:
                     predicate_body += "{BS" + str(i) + "Y + BS" + str(i) + "H = Rheightbound, BS" + str(
                         i) + "X = B" + str(i) + "X + B" + str(i) + "W}, random(" + str(
-                        1.5 * self.multiplier) + ", " + str(2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(
+                        1.5 * self._multiplier) + ", " + str(2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(
                         i) + "H = BS" + str(i) + "W}, "
                 else:
                     predicate_body += "{BS" + str(i) + "Y + BS" + str(i) + "H = Rheightbound, BS" + str(
                         i) + "X + BS" + str(i) + "W = B" + str(i) + "X}, random(" + str(
-                        1.5 * self.multiplier) + ", " + str(2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(
+                        1.5 * self._multiplier) + ", " + str(2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(
                         i) + "H = BS" + str(i) + "W}, "
             elif bed_info[i][1] == 3:
                 if random.randint(1, 2) == 1:
                     predicate_body += "{BS" + str(i) + "X + BS" + str(i) + "W = Rwidthbound, BS" + str(
                         i) + "Y = B" + str(i) + "Y + B" + str(i) + "H}, random(" + str(
-                        1.5 * self.multiplier) + ", " + str(2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(
+                        1.5 * self._multiplier) + ", " + str(2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(
                         i) + "H = BS" + str(i) + "W}, "
                 else:  # sotto
                     predicate_body += "{BS" + str(i) + "X + BS" + str(i) + "W = Rwidthbound, BS" + str(
                         i) + "Y + BS" + str(i) + "H = B" + str(i) + "Y}, random(" + str(
-                        1.5 * self.multiplier) + ", " + str(2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(
+                        1.5 * self._multiplier) + ", " + str(2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(
                         i) + "H = BS" + str(i) + "W}, "
             elif bed_info[i][1] == 4:
                 if random.randint(1, 2) == 1:
                     predicate_body += "{BS" + str(i) + "Y = ZeroY, BS" + str(i) + "X = B" + str(i) + "X + B" + str(
-                        i) + "W}, random(" + str(1.5 * self.multiplier) + ", " + str(
-                        2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
+                        i) + "W}, random(" + str(1.5 * self._multiplier) + ", " + str(
+                        2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
                 else:
                     predicate_body += "{BS" + str(i) + "Y = ZeroY, BS" + str(i) + "X + BS" + str(i) + "W = B" + str(
-                        i) + "X}, random(" + str(1.5 * self.multiplier) + ", " + str(
-                        2.0 * self.multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
+                        i) + "X}, random(" + str(1.5 * self._multiplier) + ", " + str(
+                        2.0 * self._multiplier) + ", BS" + str(i) + "W), {BS" + str(i) + "H = BS" + str(i) + "W}, "
 
         for i in range(0, wardrobe_no):
             predicate_body += "{W" + str(i) + "X + W" + str(i) + "W =< Rwidthbound, W" + str(i) + "Y + W" + str(
@@ -1233,30 +1233,30 @@ class Environment_Generation:
 
         for i in range(0, wardrobe_no):
             if wardrobe_info[i] == 1:
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", W" + str(i) + "W" + "), "
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    7.5 * self.multiplier) + ", W" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", W" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    7.5 * self._multiplier) + ", W" + str(i) + "H" + "), "
                 predicate_body += "{W" + str(i) + "X = ZeroX}, random(ZeroY, Rheightbound, W" + str(i) + "Y" + "), "
             elif wardrobe_info[i] == 2:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    7.5 * self.multiplier) + ", W" + str(i) + "W" + "), "
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", W" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    7.5 * self._multiplier) + ", W" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", W" + str(i) + "H" + "), "
                 predicate_body += "{W" + str(i) + "Y + W" + str(
                     i) + "H = Rheightbound}, random(ZeroX, Rwidthbound, W" + str(i) + "X" + "), "
             elif wardrobe_info[i] == 3:
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", W" + str(i) + "W" + "), "
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    7.5 * self.multiplier) + ", W" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", W" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    7.5 * self._multiplier) + ", W" + str(i) + "H" + "), "
                 predicate_body += "{W" + str(i) + "X + W" + str(
                     i) + "W = Rwidthbound}, random(ZeroY, Rheightbound, W" + str(i) + "Y" + "), "
             elif wardrobe_info[i] == 4:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    7.5 * self.multiplier) + ", W" + str(i) + "W" + "), "
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", W" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    7.5 * self._multiplier) + ", W" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", W" + str(i) + "H" + "), "
                 predicate_body += "{W" + str(i) + "Y = ZeroY}, random(ZeroX, Rwidthbound, W" + str(i) + "X" + "), "
 
         for i in range(0, bed_no):
@@ -1268,17 +1268,17 @@ class Environment_Generation:
         for j in range(0, bed_no):
             if bedroom.door.width == 0:
                 predicate_body += "{(" + str(
-                    bedroom.door.x + bedroom.door.width + self.door_fake_collision_mt * self.multiplier) + " =< B" + str(
+                    bedroom.door.x + bedroom.door.width + self._door_fake_collision_mt * self._multiplier) + " =< B" + str(
                     j) + "X ; B" + str(j) + "X + B" + str(j) + "W =< " + str(
-                    bedroom.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    bedroom.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     bedroom.door.y + bedroom.door.height) + " =< B" + str(j) + "Y ; B" + str(j) + "Y + B" + str(
                     j) + "H =< " + str(bedroom.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(bedroom.door.x + bedroom.door.width) + " =< B" + str(j) + "X ; B" + str(
                     j) + "X + B" + str(j) + "W =< " + str(bedroom.door.x) + ") ; (" + str(
-                    bedroom.door.y + bedroom.door.height + self.door_fake_collision_mt * self.multiplier) + " =< B" + str(
+                    bedroom.door.y + bedroom.door.height + self._door_fake_collision_mt * self._multiplier) + " =< B" + str(
                     j) + "Y ; B" + str(j) + "Y + B" + str(j) + "H =< " + str(
-                    bedroom.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    bedroom.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for i in range(0, bed_no):
             for j in range(i + 1, bed_no):
@@ -1289,17 +1289,17 @@ class Environment_Generation:
         for j in range(0, bed_no):
             if bedroom.door.width == 0:
                 predicate_body += "{(" + str(
-                    bedroom.door.x + bedroom.door.width + self.door_fake_collision_mt * self.multiplier) + " =< BS" + str(
+                    bedroom.door.x + bedroom.door.width + self._door_fake_collision_mt * self._multiplier) + " =< BS" + str(
                     j) + "X ; BS" + str(j) + "X + BS" + str(j) + "W =< " + str(
-                    bedroom.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    bedroom.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     bedroom.door.y + bedroom.door.height) + " =< BS" + str(j) + "Y ; BS" + str(j) + "Y + BS" + str(
                     j) + "H =< " + str(bedroom.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(bedroom.door.x + bedroom.door.width) + " =< BS" + str(j) + "X ; BS" + str(
                     j) + "X + BS" + str(j) + "W =< " + str(bedroom.door.x) + ") ; (" + str(
-                    bedroom.door.y + bedroom.door.height + self.door_fake_collision_mt * self.multiplier) + " =< BS" + str(
+                    bedroom.door.y + bedroom.door.height + self._door_fake_collision_mt * self._multiplier) + " =< BS" + str(
                     j) + "Y ; BS" + str(j) + "Y + BS" + str(j) + "H =< " + str(
-                    bedroom.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    bedroom.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for i in range(0, wardrobe_no):
             for j in range(i + 1, wardrobe_no):
@@ -1310,17 +1310,17 @@ class Environment_Generation:
         for j in range(0, wardrobe_no):
             if bedroom.door.width == 0:
                 predicate_body += "{(" + str(
-                    bedroom.door.x + bedroom.door.width + self.door_fake_collision_mt * self.multiplier) + " =< W" + str(
+                    bedroom.door.x + bedroom.door.width + self._door_fake_collision_mt * self._multiplier) + " =< W" + str(
                     j) + "X ; W" + str(j) + "X + W" + str(j) + "W =< " + str(
-                    bedroom.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    bedroom.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     bedroom.door.y + bedroom.door.height) + " =< W" + str(j) + "Y ; W" + str(j) + "Y + W" + str(
                     j) + "H =< " + str(bedroom.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(bedroom.door.x + bedroom.door.width) + " =< W" + str(j) + "X ; W" + str(
                     j) + "X + W" + str(j) + "W =< " + str(bedroom.door.x) + ") ; (" + str(
-                    bedroom.door.y + bedroom.door.height + self.door_fake_collision_mt * self.multiplier) + " =< W" + str(
+                    bedroom.door.y + bedroom.door.height + self._door_fake_collision_mt * self._multiplier) + " =< W" + str(
                     j) + "Y ; W" + str(j) + "Y + W" + str(j) + "H =< " + str(
-                    bedroom.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    bedroom.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for i in range(0, bed_no):
             for j in range(0, bed_no):
@@ -1346,12 +1346,12 @@ class Environment_Generation:
 
         print(("Bedroom's predicate " + str(bedroom.index) + " is:"))
         print((predicate_head + predicate_body))
-        self.prolog.assertz(predicate_head + predicate_body)
+        self._prolog.assertz(predicate_head + predicate_body)
 
-        for sol in self.prolog.query(query):
+        for sol in self._prolog.query(query):
             for i in range(0, bed_no):
                 bed_sprite = pygame.sprite.Sprite()
-                bed_sprite.image = self.type_to_sprite['bed']
+                bed_sprite.image = self._type_to_sprite['bed']
                 sprite_orientation = "S"
                 if bed_info[i][1] == 1:
                     if bed_info[i][0] == 0:
@@ -1401,7 +1401,7 @@ class Environment_Generation:
                 bed.orientation = sprite_orientation
 
                 bedside_sprite = pygame.sprite.Sprite()
-                bedside_sprite.image = self.type_to_sprite['bedside']
+                bedside_sprite.image = self._type_to_sprite['bedside']
                 bedside_sprite.image = pygame.transform.scale(bedside_sprite.image, (
                     int(sol["BS" + str(i) + "W"]), int(sol["BS" + str(i) + "H"])))
                 bedside_sprite.rect = pygame.Rect(sol["BS" + str(i) + "X"], sol["BS" + str(i) + "Y"],
@@ -1413,7 +1413,7 @@ class Environment_Generation:
 
             for i in range(0, wardrobe_no):
                 wardrobe_sprite = pygame.sprite.Sprite()
-                wardrobe_sprite.image = self.type_to_sprite['wardrobe']
+                wardrobe_sprite.image = self._type_to_sprite['wardrobe']
                 sprite_orientation = "S"
                 if wardrobe_info[i] == 2:
                     wardrobe_sprite.image = pygame.transform.rotate(wardrobe_sprite.image, 90)
@@ -1431,7 +1431,7 @@ class Environment_Generation:
                                        sol["W" + str(i) + "H"], wardrobe_sprite, 'wardrobe')
                 wardrobe.orientation = sprite_orientation
                 bedroom.children.append(wardrobe)
-        self.prolog.retract(predicate_head + predicate_body)
+        self._prolog.retract(predicate_head + predicate_body)
 
     def populate_bathroom(self, bathroom, toilet_no, shower_no, sink_no):
         head_variables = ""
@@ -1487,31 +1487,31 @@ class Environment_Generation:
 
         for i in range(0, toilet_no):
             if toilet_info[i] == 1:
-                predicate_body += "random(" + str(1.0 * self.multiplier) + ", " + str(
-                    1.3 * self.multiplier) + ", T" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(1.0 * self._multiplier) + ", " + str(
+                    1.3 * self._multiplier) + ", T" + str(i) + "H" + "), "
                 predicate_body += "{T" + str(i) + "X = ZeroX, T" + str(i) + "W = T" + str(i) + "H + " + str(
-                    0.7 * self.multiplier) + "}, THSUB" + str(i) + " is Rheightbound - T" + str(
+                    0.7 * self._multiplier) + "}, THSUB" + str(i) + " is Rheightbound - T" + str(
                     i) + "H, random(ZeroY, THSUB" + str(i) + ", T" + str(i) + "Y" + "), "
 
             elif toilet_info[i] == 2:
-                predicate_body += "random(" + str(1.0 * self.multiplier) + ", " + str(
-                    1.3 * self.multiplier) + ", T" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(1.0 * self._multiplier) + ", " + str(
+                    1.3 * self._multiplier) + ", T" + str(i) + "W" + "), "
                 predicate_body += "{T" + str(i) + "Y + T" + str(i) + "H = Rheightbound, T" + str(i) + "H = T" + str(
-                    i) + "W + " + str(0.7 * self.multiplier) + "}, TWSUB" + str(i) + " is Rwidthbound - T" + str(
+                    i) + "W + " + str(0.7 * self._multiplier) + "}, TWSUB" + str(i) + " is Rwidthbound - T" + str(
                     i) + "W, random(ZeroX, TWSUB" + str(i) + ", T" + str(i) + "X" + "), "
 
             elif toilet_info[i] == 3:
-                predicate_body += "random(" + str(1.0 * self.multiplier) + ", " + str(
-                    1.3 * self.multiplier) + ", T" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(1.0 * self._multiplier) + ", " + str(
+                    1.3 * self._multiplier) + ", T" + str(i) + "H" + "), "
                 predicate_body += "{T" + str(i) + "X + T" + str(i) + "W = Rwidthbound, T" + str(i) + "W = T" + str(
-                    i) + "H + " + str(0.7 * self.multiplier) + "}, THSUB" + str(i) + " is Rheightbound - T" + str(
+                    i) + "H + " + str(0.7 * self._multiplier) + "}, THSUB" + str(i) + " is Rheightbound - T" + str(
                     i) + "H, random(ZeroY, THSUB" + str(i) + ", T" + str(i) + "Y" + "), "
 
             elif toilet_info[i] == 4:
-                predicate_body += "random(" + str(1.0 * self.multiplier) + ", " + str(
-                    1.3 * self.multiplier) + ", T" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(1.0 * self._multiplier) + ", " + str(
+                    1.3 * self._multiplier) + ", T" + str(i) + "W" + "), "
                 predicate_body += "{T" + str(i) + "Y = ZeroY, T" + str(i) + "H = T" + str(i) + "W + " + str(
-                    0.7 * self.multiplier) + "}, TWSUB" + str(i) + " is Rwidthbound - T" + str(
+                    0.7 * self._multiplier) + "}, TWSUB" + str(i) + " is Rwidthbound - T" + str(
                     i) + "W, random(ZeroX, TWSUB" + str(i) + ", T" + str(i) + "X" + "), "
 
         shower_info = []
@@ -1519,26 +1519,26 @@ class Environment_Generation:
             shower_info.append(random.randint(1, 4))
         for i in range(0, shower_no):
             if shower_info[i] == 1:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    4.0 * self.multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    4.0 * self._multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
                     i) + "X = ZeroX, SHSUB" + str(i) + " is Rheightbound - S" + str(i) + "H, random(ZeroY, SHSUB" + str(
                     i) + ", S" + str(i) + "Y), "
 
             if shower_info[i] == 2:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    4.0 * self.multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    4.0 * self._multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
                     i) + "Y is Rheightbound - S" + str(i) + "H, SWSUB" + str(i) + " is Rwidthbound - S" + str(
                     i) + "W, random(ZeroX, SWSUB" + str(i) + ", S" + str(i) + "X), "
 
             if shower_info[i] == 3:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    4.0 * self.multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    4.0 * self._multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
                     i) + "X is Rwidthbound - S" + str(i) + "W, SHSUB" + str(i) + " is Rheightbound - S" + str(
                     i) + "H, random(ZeroY, SHSUB" + str(i) + ", S" + str(i) + "Y), "
 
             if shower_info[i] == 4:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    4.0 * self.multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    4.0 * self._multiplier) + ", S" + str(i) + "W), S" + str(i) + "H = S" + str(i) + "W, S" + str(
                     i) + "Y = ZeroY, SWSUB" + str(i) + " is Rwidthbound - S" + str(i) + "W, random(ZeroX, SWSUB" + str(
                     i) + ", S" + str(i) + "X), "
 
@@ -1547,29 +1547,29 @@ class Environment_Generation:
             sink_info.append((random.randint(1, 4)))
         for i in range(0, sink_no):
             if sink_info[i] == 1:
-                predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(
-                    3.5 * self.multiplier) + ", SI" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(
+                    3.5 * self._multiplier) + ", SI" + str(i) + "H" + "), "
                 predicate_body += "{SI" + str(i) + "X = ZeroX, SI" + str(i) + "W = SI" + str(
                     i) + "H * (2/3)}, SIHSUB" + str(i) + " is Rheightbound - SI" + str(
                     i) + "H, random(ZeroY, SIHSUB" + str(i) + ", SI" + str(i) + "Y" + "), "
 
             elif sink_info[i] == 2:
-                predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(
-                    3.5 * self.multiplier) + ", SI" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(
+                    3.5 * self._multiplier) + ", SI" + str(i) + "W" + "), "
                 predicate_body += "{SI" + str(i) + "Y + SI" + str(i) + "H = Rheightbound, SI" + str(i) + "H = SI" + str(
                     i) + "W * (2/3)}, SIWSUB" + str(i) + " is Rwidthbound - SI" + str(
                     i) + "W, random(ZeroX, SIWSUB" + str(i) + ", SI" + str(i) + "X" + "), "
 
             elif sink_info[i] == 3:
-                predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(
-                    3.5 * self.multiplier) + ", SI" + str(i) + "H" + "), "
+                predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(
+                    3.5 * self._multiplier) + ", SI" + str(i) + "H" + "), "
                 predicate_body += "{SI" + str(i) + "X + SI" + str(i) + "W = Rwidthbound, SI" + str(i) + "W = SI" + str(
                     i) + "H * (2/3)}, SIHSUB" + str(i) + " is Rheightbound - SI" + str(
                     i) + "H, random(ZeroY, SIHSUB" + str(i) + ", SI" + str(i) + "Y" + "), "
 
             elif sink_info[i] == 4:
-                predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(
-                    3.5 * self.multiplier) + ", SI" + str(i) + "W" + "), "
+                predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(
+                    3.5 * self._multiplier) + ", SI" + str(i) + "W" + "), "
                 predicate_body += "{SI" + str(i) + "Y = ZeroY, SI" + str(i) + "H = SI" + str(
                     i) + "W * (2/3)}, SIWSUB" + str(i) + " is Rwidthbound - SI" + str(
                     i) + "W, random(ZeroX, SIWSUB" + str(i) + ", SI" + str(i) + "X" + "), "
@@ -1583,17 +1583,17 @@ class Environment_Generation:
         for j in range(0, shower_no):
             if bathroom.door.width == 0:
                 predicate_body += "{(" + str(
-                    bathroom.door.x + bathroom.door.width + self.door_fake_collision_mt * self.multiplier) + " =< S" + str(
+                    bathroom.door.x + bathroom.door.width + self._door_fake_collision_mt * self._multiplier) + " =< S" + str(
                     j) + "X ; S" + str(j) + "X + S" + str(j) + "W =< " + str(
-                    bathroom.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    bathroom.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     bathroom.door.y + bathroom.door.height) + " =< S" + str(j) + "Y ; S" + str(j) + "Y + S" + str(
                     j) + "H =< " + str(bathroom.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(bathroom.door.x + bathroom.door.width) + " =< S" + str(j) + "X ; S" + str(
                     j) + "X + S" + str(j) + "W =< " + str(bathroom.door.x) + ") ; (" + str(
-                    bathroom.door.y + bathroom.door.height + self.door_fake_collision_mt * self.multiplier) + " =< S" + str(
+                    bathroom.door.y + bathroom.door.height + self._door_fake_collision_mt * self._multiplier) + " =< S" + str(
                     j) + "Y ; S" + str(j) + "Y + S" + str(j) + "H =< " + str(
-                    bathroom.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    bathroom.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for j in range(0, shower_no):
             for i in range(0, sink_no):
@@ -1604,18 +1604,18 @@ class Environment_Generation:
         for j in range(0, sink_no):
             if bathroom.door.width == 0:
                 predicate_body += "{(" + str(
-                    bathroom.door.x + bathroom.door.width + self.door_fake_collision_mt * self.multiplier) + " =< SI" + str(
+                    bathroom.door.x + bathroom.door.width + self._door_fake_collision_mt * self._multiplier) + " =< SI" + str(
                     j) + "X ; SI" + str(j) + "X + SI" + str(j) + "W =< " + str(
-                    bathroom.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    bathroom.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     bathroom.door.y + bathroom.door.height) + " =< SI" + str(j) + "Y ; SI" + str(j) + "Y + SI" + str(
                     j) + "H =< " + str(bathroom.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(bathroom.door.x + bathroom.door.width) + " =< SI" + str(
                     j) + "X ; SI" + str(
                     j) + "X + SI" + str(j) + "W =< " + str(bathroom.door.x) + ") ; (" + str(
-                    bathroom.door.y + bathroom.door.height + self.door_fake_collision_mt * self.multiplier) + " =< SI" + str(
+                    bathroom.door.y + bathroom.door.height + self._door_fake_collision_mt * self._multiplier) + " =< SI" + str(
                     j) + "Y ; SI" + str(j) + "Y + SI" + str(j) + "H =< " + str(
-                    bathroom.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    bathroom.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for j in range(0, sink_no):
             for i in range(0, toilet_no):
@@ -1626,29 +1626,29 @@ class Environment_Generation:
         for j in range(0, toilet_no):
             if bathroom.door.width == 0:
                 predicate_body += "{(" + str(
-                    bathroom.door.x + bathroom.door.width + self.door_fake_collision_mt * self.multiplier) + " =< T" + str(
+                    bathroom.door.x + bathroom.door.width + self._door_fake_collision_mt * self._multiplier) + " =< T" + str(
                     j) + "X ; T" + str(j) + "X + T" + str(j) + "W =< " + str(
-                    bathroom.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    bathroom.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     bathroom.door.y + bathroom.door.height) + " =< T" + str(j) + "Y ; T" + str(j) + "Y + T" + str(
                     j) + "H =< " + str(bathroom.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(bathroom.door.x + bathroom.door.width) + " =< T" + str(j) + "X ; T" + str(
                     j) + "X + T" + str(j) + "W =< " + str(bathroom.door.x) + ") ; (" + str(
-                    bathroom.door.y + bathroom.door.height + self.door_fake_collision_mt * self.multiplier) + " =< T" + str(
+                    bathroom.door.y + bathroom.door.height + self._door_fake_collision_mt * self._multiplier) + " =< T" + str(
                     j) + "Y ; T" + str(j) + "Y + T" + str(j) + "H =< " + str(
-                    bathroom.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    bathroom.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         predicate_body = predicate_body[:-2]
         predicate_body += ", !"
 
         print("The predicate to generate the bathroom is: ")
         print((predicate_head + predicate_body))
-        self.prolog.assertz(predicate_head + predicate_body)
+        self._prolog.assertz(predicate_head + predicate_body)
 
-        for sol in self.prolog.query(query):
+        for sol in self._prolog.query(query):
             for i in range(0, toilet_no):
                 toilet_sprite = pygame.sprite.Sprite()
-                toilet_sprite.image = self.type_to_sprite['toilet']
+                toilet_sprite.image = self._type_to_sprite['toilet']
                 sprite_orientation = "S"
                 if toilet_info[i] == 1:
                     toilet_sprite.image = pygame.transform.rotate(toilet_sprite.image, 90)
@@ -1673,7 +1673,7 @@ class Environment_Generation:
 
             for i in range(0, shower_no):
                 shower_sprite = pygame.sprite.Sprite()
-                shower_sprite.image = self.type_to_sprite['shower']
+                shower_sprite.image = self._type_to_sprite['shower']
                 sprite_orientation = "S"
                 if shower_info[i] == 1:
                     shower_sprite.image = pygame.transform.rotate(shower_sprite.image, 90)
@@ -1698,7 +1698,7 @@ class Environment_Generation:
 
             for i in range(0, sink_no):
                 sink_sprite = pygame.sprite.Sprite()
-                sink_sprite.image = self.type_to_sprite['sink']
+                sink_sprite.image = self._type_to_sprite['sink']
                 sprite_orientation = "S"
                 if sink_info[i] == 1:
                     sink_sprite.image = pygame.transform.rotate(sink_sprite.image, 90)
@@ -1721,7 +1721,7 @@ class Environment_Generation:
                 sink.orientation = sprite_orientation
                 bathroom.children.append(sink)
 
-        self.prolog.retract(predicate_head + predicate_body)
+        self._prolog.retract(predicate_head + predicate_body)
 
     def populate_hall(self, hall, table_no, sofa_no, cupboard_no, sofa_dist_ths):
         head_variables = ""
@@ -1780,14 +1780,14 @@ class Environment_Generation:
 
         predicate_body += "Rwidthbound is RoomWidth + ZeroX, Rheightbound is RoomHeight + ZeroY, "
 
-        predicate_body += "random(" + str(0.7 * self.multiplier) + ", " + str(1.0 * self.multiplier) + ", ChairSize), "
+        predicate_body += "random(" + str(0.7 * self._multiplier) + ", " + str(1.0 * self._multiplier) + ", ChairSize), "
         for i in range(0, table_no):
-            predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(6.0 * self.multiplier) + ", TA" + str(
-                i) + "W), random(" + str(2.5 * self.multiplier) + ", " + str(6.0 * self.multiplier) + ", TA" + str(
+            predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(6.0 * self._multiplier) + ", TA" + str(
+                i) + "W), random(" + str(2.5 * self._multiplier) + ", " + str(6.0 * self._multiplier) + ", TA" + str(
                 i) + "H), "
             predicate_body += "{TA" + str(i) + "W * TA" + str(i) + "H >= " + str(
-                8.0 * self.multiplier ** 2) + ", TA" + str(
-                i) + "W * TA" + str(i) + "H =< " + str(15.0 * self.multiplier ** 2) + "}, "
+                8.0 * self._multiplier ** 2) + ", TA" + str(
+                i) + "W * TA" + str(i) + "H =< " + str(15.0 * self._multiplier ** 2) + "}, "
 
             chair_start_index = i * 4
             for k in range(chair_start_index, chair_start_index + 4):
@@ -1817,37 +1817,37 @@ class Environment_Generation:
             cupboard_info.append(random.randint(1, 4))
         for i in range(0, cupboard_no):
             if cupboard_info[i] == 1:
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", CB" + str(
                     i) + "W" + "), "
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    12.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", CB" + str(
                     i) + "H" + "), "
                 predicate_body += "{CB" + str(i) + "X = ZeroX}, random(ZeroY, Rheightbound, CB" + str(i) + "Y" + "), "
             elif cupboard_info[i] == 2:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    12.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", CB" + str(
                     i) + "W" + "), "
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", CB" + str(
                     i) + "H" + "), "
                 predicate_body += "{CB" + str(i) + "Y + CB" + str(
                     i) + "H = Rheightbound}, random(ZeroX, Rwidthbound, CB" + str(i) + "X" + "), "
             elif cupboard_info[i] == 3:
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", CB" + str(
                     i) + "W" + "), "
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    12.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", CB" + str(
                     i) + "H" + "), "
                 predicate_body += "{CB" + str(i) + "X + CB" + str(
                     i) + "W = Rwidthbound}, random(ZeroY, Rheightbound, CB" + str(i) + "Y" + "), "
             elif cupboard_info[i] == 4:
-                predicate_body += "random(" + str(3.0 * self.multiplier) + ", " + str(
-                    12.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(3.0 * self._multiplier) + ", " + str(
+                    12.0 * self._multiplier) + ", CB" + str(
                     i) + "W" + "), "
-                predicate_body += "random(" + str(1.5 * self.multiplier) + ", " + str(
-                    2.0 * self.multiplier) + ", CB" + str(
+                predicate_body += "random(" + str(1.5 * self._multiplier) + ", " + str(
+                    2.0 * self._multiplier) + ", CB" + str(
                     i) + "H" + "), "
                 predicate_body += "{CB" + str(i) + "Y = ZeroY}, random(ZeroX, Rwidthbound, CB" + str(i) + "X" + "), "
 
@@ -1858,14 +1858,14 @@ class Environment_Generation:
                 random.randint(0, len(directions) - 1)))
         for i in range(0, sofa_no):
             if sofa_info[i] == 1 or sofa_info[i] == 3:
-                predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(
-                    3.0 * self.multiplier) + ", SO" + str(
-                    i) + "W), random(" + str(6.0 * self.multiplier) + ", " + str(8.0 * self.multiplier) + ", SO" + str(
+                predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(
+                    3.0 * self._multiplier) + ", SO" + str(
+                    i) + "W), random(" + str(6.0 * self._multiplier) + ", " + str(8.0 * self._multiplier) + ", SO" + str(
                     i) + "H), "
             else:
-                predicate_body += "random(" + str(2.5 * self.multiplier) + ", " + str(
-                    3.0 * self.multiplier) + ", SO" + str(
-                    i) + "H), random(" + str(6.0 * self.multiplier) + ", " + str(8.0 * self.multiplier) + ", SO" + str(
+                predicate_body += "random(" + str(2.5 * self._multiplier) + ", " + str(
+                    3.0 * self._multiplier) + ", SO" + str(
+                    i) + "H), random(" + str(6.0 * self._multiplier) + ", " + str(8.0 * self._multiplier) + ", SO" + str(
                     i) + "W), "
 
             if sofa_info[i] == 1:
@@ -1892,26 +1892,26 @@ class Environment_Generation:
         for j in range(0, sofa_no):
             for i in range(0, cupboard_no):
                 predicate_body += "{(CB" + str(i) + "X + CB" + str(i) + "W =< SO" + str(j) + "X - " + str(
-                    sofa_dist_ths * self.multiplier) + "; SO" + str(j) + "X + SO" + str(j) + "W =< CB" + str(
-                    i) + "X - " + str(sofa_dist_ths * self.multiplier) + ") ; (CB" + str(i) + "Y + CB" + str(
-                    i) + "H =< SO" + str(j) + "Y - " + str(sofa_dist_ths * self.multiplier) + " ; SO" + str(
+                    sofa_dist_ths * self._multiplier) + "; SO" + str(j) + "X + SO" + str(j) + "W =< CB" + str(
+                    i) + "X - " + str(sofa_dist_ths * self._multiplier) + ") ; (CB" + str(i) + "Y + CB" + str(
+                    i) + "H =< SO" + str(j) + "Y - " + str(sofa_dist_ths * self._multiplier) + " ; SO" + str(
                     j) + "Y + SO" + str(j) + "H =< CB" + str(i) + "Y - " + str(
-                    sofa_dist_ths * self.multiplier) + ")}, "
+                    sofa_dist_ths * self._multiplier) + ")}, "
 
         for j in range(0, sofa_no):
             if hall.door.width == 0:
                 predicate_body += "{(" + str(
-                    hall.door.x + hall.door.width + self.door_fake_collision_mt * self.multiplier) + " =< SO" + str(
+                    hall.door.x + hall.door.width + self._door_fake_collision_mt * self._multiplier) + " =< SO" + str(
                     j) + "X ; SO" + str(j) + "X + SO" + str(j) + "W =< " + str(
-                    hall.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    hall.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     hall.door.y + hall.door.height) + " =< SO" + str(j) + "Y ; SO" + str(j) + "Y + SO" + str(
                     j) + "H =< " + str(hall.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(hall.door.x + hall.door.width) + " =< SO" + str(j) + "X ; SO" + str(
                     j) + "X + SO" + str(j) + "W =< " + str(hall.door.x) + ") ; (" + str(
-                    hall.door.y + hall.door.height + self.door_fake_collision_mt * self.multiplier) + " =< SO" + str(
+                    hall.door.y + hall.door.height + self._door_fake_collision_mt * self._multiplier) + " =< SO" + str(
                     j) + "Y ; SO" + str(j) + "Y + SO" + str(j) + "H =< " + str(
-                    hall.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    hall.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for i in range(0, cupboard_no):
             for j in range(i + 1, cupboard_no):
@@ -1923,42 +1923,42 @@ class Environment_Generation:
         for j in range(0, cupboard_no):
             if hall.door.width == 0:
                 predicate_body += "{(" + str(
-                    hall.door.x + hall.door.width + self.door_fake_collision_mt * self.multiplier) + " =< CB" + str(
+                    hall.door.x + hall.door.width + self._door_fake_collision_mt * self._multiplier) + " =< CB" + str(
                     j) + "X ; CB" + str(j) + "X + CB" + str(j) + "W =< " + str(
-                    hall.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    hall.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     hall.door.y + hall.door.height) + " =< CB" + str(j) + "Y ; CB" + str(j) + "Y + CB" + str(
                     j) + "H =< " + str(hall.door.y) + ")}, "
             else:
                 predicate_body += "{(" + str(hall.door.x + hall.door.width) + " =< CB" + str(j) + "X ; CB" + str(
                     j) + "X + CB" + str(j) + "W =< " + str(hall.door.x) + ") ; (" + str(
-                    hall.door.y + hall.door.height + self.door_fake_collision_mt * self.multiplier) + " =< CB" + str(
+                    hall.door.y + hall.door.height + self._door_fake_collision_mt * self._multiplier) + " =< CB" + str(
                     j) + "Y ; CB" + str(j) + "Y + CB" + str(j) + "H =< " + str(
-                    hall.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    hall.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for i in range(0, sofa_no):
             for j in range(i + 1, sofa_no):
                 predicate_body += "{(SO" + str(i) + "X + SO" + str(i) + "W =< SO" + str(j) + "X - " + str(
-                    sofa_dist_ths * self.multiplier) + "; SO" + str(j) + "X + SO" + str(j) + "W =< SO" + str(
-                    i) + "X - " + str(sofa_dist_ths * self.multiplier) + ") ; (SO" + str(i) + "Y + SO" + str(
-                    i) + "H =< SO" + str(j) + "Y - " + str(sofa_dist_ths * self.multiplier) + "; SO" + str(
+                    sofa_dist_ths * self._multiplier) + "; SO" + str(j) + "X + SO" + str(j) + "W =< SO" + str(
+                    i) + "X - " + str(sofa_dist_ths * self._multiplier) + ") ; (SO" + str(i) + "Y + SO" + str(
+                    i) + "H =< SO" + str(j) + "Y - " + str(sofa_dist_ths * self._multiplier) + "; SO" + str(
                     j) + "Y + SO" + str(j) + "H =< SO" + str(i) + "Y - " + str(
-                    sofa_dist_ths * self.multiplier) + ")}, "
+                    sofa_dist_ths * self._multiplier) + ")}, "
 
         for j in range(0, sofa_no):
             for i in range(0, table_no):
                 predicate_body += "{(TA" + str(i) + "X + TA" + str(i) + "W + ChairSize =< SO" + str(j) + "X - " + str(
-                    sofa_dist_ths * self.multiplier) + "; SO" + str(j) + "X + SO" + str(j) + "W =< TA" + str(
-                    i) + "X - ChairSize - " + str(sofa_dist_ths * self.multiplier) + ") ; (TA" + str(
+                    sofa_dist_ths * self._multiplier) + "; SO" + str(j) + "X + SO" + str(j) + "W =< TA" + str(
+                    i) + "X - ChairSize - " + str(sofa_dist_ths * self._multiplier) + ") ; (TA" + str(
                     i) + "Y + TA" + str(i) + "H + ChairSize =< SO" + str(j) + "Y - " + str(
-                    sofa_dist_ths * self.multiplier) + " ; SO" + str(j) + "Y + SO" + str(j) + "H =< TA" + str(
-                    i) + "Y - ChairSize - " + str(sofa_dist_ths * self.multiplier) + ")}, "
+                    sofa_dist_ths * self._multiplier) + " ; SO" + str(j) + "Y + SO" + str(j) + "H =< TA" + str(
+                    i) + "Y - ChairSize - " + str(sofa_dist_ths * self._multiplier) + ")}, "
 
         for j in range(0, table_no):
             if hall.door.width == 0:
                 predicate_body += "{(" + str(
-                    hall.door.x + hall.door.width + self.door_fake_collision_mt * self.multiplier) + " =< TA" + str(
+                    hall.door.x + hall.door.width + self._door_fake_collision_mt * self._multiplier) + " =< TA" + str(
                     j) + "X - ChairSize; TA" + str(j) + "X + TA" + str(j) + "W + ChairSize =< " + str(
-                    hall.door.x - self.door_fake_collision_mt * self.multiplier) + ") ; (" + str(
+                    hall.door.x - self._door_fake_collision_mt * self._multiplier) + ") ; (" + str(
                     hall.door.y + hall.door.height) + " =< TA" + str(j) + "Y - ChairSize ; TA" + str(
                     j) + "Y + TA" + str(
                     j) + "H + ChairSize =< " + str(hall.door.y) + ")}, "
@@ -1966,37 +1966,37 @@ class Environment_Generation:
                 predicate_body += "{(" + str(hall.door.x + hall.door.width) + " =< TA" + str(
                     j) + "X - ChairSize; TA" + str(
                     j) + "X + TA" + str(j) + "W + ChairSize =< " + str(hall.door.x) + ") ; (" + str(
-                    hall.door.y + hall.door.height + self.door_fake_collision_mt * self.multiplier) + " =< TA" + str(
+                    hall.door.y + hall.door.height + self._door_fake_collision_mt * self._multiplier) + " =< TA" + str(
                     j) + "Y - ChairSize ; TA" + str(j) + "Y + TA" + str(j) + "H + ChairSize =< " + str(
-                    hall.door.y - self.door_fake_collision_mt * self.multiplier) + ")}, "
+                    hall.door.y - self._door_fake_collision_mt * self._multiplier) + ")}, "
 
         for j in range(0, cupboard_no):
             for i in range(0, table_no):
                 predicate_body += "{(TA" + str(i) + "X + TA" + str(i) + "W + ChairSize =< CB" + str(j) + "X - " + str(
-                    sofa_dist_ths * self.multiplier) + "; CB" + str(j) + "X + CB" + str(j) + "W =< TA" + str(
-                    i) + "X - ChairSize - " + str(sofa_dist_ths * self.multiplier) + ") ; (TA" + str(
+                    sofa_dist_ths * self._multiplier) + "; CB" + str(j) + "X + CB" + str(j) + "W =< TA" + str(
+                    i) + "X - ChairSize - " + str(sofa_dist_ths * self._multiplier) + ") ; (TA" + str(
                     i) + "Y + TA" + str(i) + "H + ChairSize =< CB" + str(j) + "Y - " + str(
-                    sofa_dist_ths * self.multiplier) + " ; CB" + str(j) + "Y + CB" + str(j) + "H =< TA" + str(
-                    i) + "Y - ChairSize - " + str(sofa_dist_ths * self.multiplier) + ")}, "
+                    sofa_dist_ths * self._multiplier) + " ; CB" + str(j) + "Y + CB" + str(j) + "H =< TA" + str(
+                    i) + "Y - ChairSize - " + str(sofa_dist_ths * self._multiplier) + ")}, "
 
         for i in range(0, table_no):
             for j in range(i + 1, table_no):
                 predicate_body += "{(TA" + str(i) + "X + TA" + str(i) + "W + ChairSize*2 =< TA" + str(j) + "X - " + str(
-                    sofa_dist_ths * self.multiplier) + " ; TA" + str(j) + "X + TA" + str(j) + "W =< TA" + str(
-                    i) + "X - ChairSize*2 - " + str(sofa_dist_ths * self.multiplier) + ") ; (TA" + str(
+                    sofa_dist_ths * self._multiplier) + " ; TA" + str(j) + "X + TA" + str(j) + "W =< TA" + str(
+                    i) + "X - ChairSize*2 - " + str(sofa_dist_ths * self._multiplier) + ") ; (TA" + str(
                     i) + "Y + TA" + str(i) + "H + ChairSize*2 =< TA" + str(j) + "Y - " + str(
-                    sofa_dist_ths * self.multiplier) + " ; TA" + str(j) + "Y + TA" + str(j) + "H =< TA" + str(
-                    i) + "Y - ChairSize*2 - " + str(sofa_dist_ths * self.multiplier) + ")}, "
+                    sofa_dist_ths * self._multiplier) + " ; TA" + str(j) + "Y + TA" + str(j) + "H =< TA" + str(
+                    i) + "Y - ChairSize*2 - " + str(sofa_dist_ths * self._multiplier) + ")}, "
 
         predicate_body = predicate_body[:-2]
         predicate_body += ", !"
-        self.prolog.assertz(predicate_head + predicate_body)
+        self._prolog.assertz(predicate_head + predicate_body)
         print(("Hall's query " + str(hall.index) + " is : " + predicate_head + predicate_body))
 
-        for sol in self.prolog.query(query):
+        for sol in self._prolog.query(query):
             for i in range(0, cupboard_no):
                 cupboard_sprite = pygame.sprite.Sprite()
-                cupboard_sprite.image = self.type_to_sprite['wardrobe']
+                cupboard_sprite.image = self._type_to_sprite['wardrobe']
                 sprite_orientation = "S"
                 if cupboard_info[i] == 2 or cupboard_info[i] == 4:
                     cupboard_sprite.image = pygame.transform.rotate(cupboard_sprite.image, 90)
@@ -2012,7 +2012,7 @@ class Environment_Generation:
 
             for i in range(0, sofa_no):
                 sofa_sprite = pygame.sprite.Sprite()
-                sofa_sprite.image = self.type_to_sprite['sofa']
+                sofa_sprite.image = self._type_to_sprite['sofa']
                 sprite_orientation = "S"
                 if sofa_info[i] == 1:
                     sofa_sprite.image = pygame.transform.rotate(sofa_sprite.image, 90)
@@ -2040,7 +2040,7 @@ class Environment_Generation:
 
             for i in range(0, table_no):
                 table_sprite = pygame.sprite.Sprite()
-                table_sprite.image = self.type_to_sprite['hall_table']
+                table_sprite.image = self._type_to_sprite['hall_table']
                 table_sprite.image = pygame.transform.scale(table_sprite.image,
                                                             (int(sol["TA" + str(i) + "W"]),
                                                              int(sol["TA" + str(i) + "H"])))
@@ -2052,7 +2052,7 @@ class Environment_Generation:
 
                 for j in range(i * 4, i * 4 + 4):
                     chair_sprite = pygame.sprite.Sprite()
-                    chair_sprite.image = self.type_to_sprite['chair']
+                    chair_sprite.image = self._type_to_sprite['chair']
                     chair_sprite.image = pygame.transform.rotate(chair_sprite.image, ((j + 2) % 4) * (90))
                     chair_sprite.image = pygame.transform.scale(chair_sprite.image,
                                                                 (int(sol["C" + str(j) + "W"]),
@@ -2071,13 +2071,13 @@ class Environment_Generation:
                         chair.orientation = "W"
                     table.children.append(chair)
                 hall.children.append(table)
-        self.prolog.retract(predicate_head + predicate_body)
+        self._prolog.retract(predicate_head + predicate_body)
 
     def project_segments(self):
         angle_range = 120
         step = 3
-        eye_point = self.agent.sprite.rect.center
-        slope = (self.agent.targetRot + angle_range / 2) % 360
+        eye_point = self._agent.sprite.rect.center
+        slope = (self._agent.targetRot + angle_range / 2) % 360
         points = []
 
         for i in range(0, angle_range, step):
@@ -2089,41 +2089,41 @@ class Environment_Generation:
             intersection_points = []
             intersection_points_distances = []
 
-            for room in self.rooms:
-                intersection_point = self.checker.check_line_room_collision((eye_point[0], eye_point[1], view_point[0],
-                                                                             view_point[1]), room)
+            for room in self._rooms:
+                intersection_point = self._checker.check_line_room_collision((eye_point[0], eye_point[1], view_point[0],
+                                                                              view_point[1]), room)
                 if intersection_point is not None:
                     intersection_points.append(intersection_point)
                 for room_child in room.children:
-                    intersection_point = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
-                                                                                 view_point[0], view_point[1]),
-                                                                                room_child.sprite.rect)
+                    intersection_point = self._checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                  view_point[0], view_point[1]),
+                                                                                 room_child.sprite.rect)
                     if intersection_point is not None:
                         intersection_points.append(intersection_point)
                     for child in room_child.children:
-                        intersection_point = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
-                                                                                     view_point[0], view_point[1]),
-                                                                                    child.sprite.rect)
+                        intersection_point = self._checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                      view_point[0], view_point[1]),
+                                                                                     child.sprite.rect)
                         if intersection_point is not None:
                             intersection_points.append(intersection_point)
-            intersection_point_floor = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
-                                                                               view_point[0], view_point[1]),
-                                                                              self.floor.sprite.rect)
+            intersection_point_floor = self._checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                view_point[0], view_point[1]),
+                                                                               self._floor.sprite.rect)
             if intersection_point_floor is not None:
                 any_room_contains_point = False
-                for room in self.rooms:
-                    if self.checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
+                for room in self._rooms:
+                    if self._checker.check_rect_contains_point(room.sprite.rect, intersection_point_floor):
                         any_room_contains_point = True
                         break
                 if not any_room_contains_point:
                     intersection_points.append(intersection_point_floor)
-            intersection_point_objective = self.checker.check_line_rect_collision((eye_point[0], eye_point[1],
-                                                                                 view_point[0], view_point[1]),
-                                                                                self.objective.sprite.rect)
+            intersection_point_objective = self._checker.check_line_rect_collision((eye_point[0], eye_point[1],
+                                                                                    view_point[0], view_point[1]),
+                                                                                   self._objective.sprite.rect)
             if intersection_point_objective is not None:
                 intersection_points.append(intersection_point_objective)
             for point in intersection_points:
-                intersection_points_distances.append(self.checker.point_point_distance(eye_point, point))
+                intersection_points_distances.append(self._checker.point_point_distance(eye_point, point))
             if len(intersection_points) > 0:
                 chosen_index = np.argmin(intersection_points_distances)
                 chosen_point = intersection_points[chosen_index]
@@ -2138,11 +2138,11 @@ class Environment_Generation:
         return points, is_agent_looking_at_objective
 
     def save_generated_model(self):
-        serialized_floor = dict(x=self.floor.x, y=self.floor.y, width=self.floor.width, height=self.floor.height)
+        serialized_floor = dict(x=self._floor.x, y=self._floor.y, width=self._floor.width, height=self._floor.height)
 
-        serialized_environment = dict(roomNumber=len(self.rooms), floor=serialized_floor)
+        serialized_environment = dict(roomNumber=len(self._rooms), floor=serialized_floor)
 
-        for room in self.rooms:
+        for room in self._rooms:
             serialized_room = dict(x=room.x, y=room.y, width=room.width, height=room.height, type=room.type,
                                    children=[], door=dict(x=room.door.x, y=room.door.y, width=room.door.width,
                                                           height=room.door.height))

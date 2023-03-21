@@ -33,9 +33,9 @@ class Training:
             done = False
             frame_count = 0
             self.reset_agent()
-            self.environment.agent = self.agent
-            self.environment.objective = self.objective
-            self.environment.floor = self.floor
+            self.environment._agent = self.agent
+            self.environment._objective = self.objective
+            self.environment._floor = self.floor
             self.environment.screen = self.screen
             self.environment.reset_objective()
             state = np.reshape(self.environment.project_segments()[0], [1, state_size, 3])
@@ -85,7 +85,7 @@ class Training:
                             self.agent.x += speed
                             self.agent.y += speed
 
-                    self.environment.rooms = self.rooms
+                    self.environment._rooms = self.rooms
                     self.environment.screen = self.screen
                     self.environment.draw_model()
                     pygame.display.update()
