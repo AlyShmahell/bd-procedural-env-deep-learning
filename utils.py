@@ -127,3 +127,8 @@ class Check_Collisions:
 
     def check_rect_contains_point(self, rect, point):
         return rect.x <= point[0] <= rect.x + rect.width and rect.y <= point[1] <= rect.y + rect.height
+
+
+
+
+
