@@ -47,7 +47,22 @@ class Environment_Generation:
         if len(self._rooms) > 1:
             self.screen.blit(self._floor.sprite.image, self._floor.sprite.rect)
             pygame.draw.rect(self.screen, (255, 255, 255), self._floor.sprite.rect, 2)
+        self.draw_rooms()
+        self.draw_agent_and_target()
 
+    def draw_agent_and_target(self):
+        if self._agent.targetRot - self._agent.rot != 0:
+            self._agent.image = pygame.transform.rotate(self._agent.sprite.image, self._agent.targetRot - 90)
+            old_center = self._agent.sprite.rect.center
+            self._agent.sprite.rect = self._agent.image.get_rect()
+            self._agent.sprite.rect.center = old_center
+            self._agent.rot = self._agent.targetRot
+        self._agent.sprite.rect.x = self._agent.x
+        self._agent.sprite.rect.y = self._agent.y
+        self.screen.blit(self._agent.image, self._agent.sprite.rect)
+        self.screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
+
+    def draw_rooms(self):
         for room in self._rooms:
             self.screen.blit(room.sprite.image, room.sprite.rect)
             pygame.draw.rect(self.screen, (255, 255, 255), room.sprite.rect, 2)
@@ -67,16 +82,6 @@ class Environment_Generation:
                 self.screen.blit(room_child.sprite.image, room_child.sprite.rect)
                 for child in room_child.children:
                     self.screen.blit(child.sprite.image, child.sprite.rect)
-        if self._agent.targetRot - self._agent.rot != 0:
-            self._agent.image = pygame.transform.rotate(self._agent.sprite.image, self._agent.targetRot - 90)
-            old_center = self._agent.sprite.rect.center
-            self._agent.sprite.rect = self._agent.image.get_rect()
-            self._agent.sprite.rect.center = old_center
-            self._agent.rot = self._agent.targetRot
-        self._agent.sprite.rect.x = self._agent.x
-        self._agent.sprite.rect.y = self._agent.y
-        self.screen.blit(self._agent.image, self._agent.sprite.rect)
-        self.screen.blit(self._objective.sprite.image, self._objective.sprite.rect)
 
     def display_environment(self, bathroom_no, bedroom_no, kitchen_no, hall_no, mode='view'):
         running = True
