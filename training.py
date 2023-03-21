@@ -33,6 +33,10 @@ class Training:
             done = False
             frame_count = 0
             self.reset_agent()
+            self.environment.agent = self.agent
+            self.environment.objective = self.objective
+            self.environment.floor = self.floor
+            self.environment.screen = self.screen
             self.environment.reset_objective()
             state = np.reshape(self.environment.project_segments()[0], [1, state_size, 3])
             last_dist_from_spawn = 0
@@ -81,6 +85,8 @@ class Training:
                             self.agent.x += speed
                             self.agent.y += speed
 
+                    self.environment.rooms = self.rooms
+                    self.environment.screen = self.screen
                     self.environment.draw_model()
                     pygame.display.update()
 
@@ -199,7 +205,7 @@ class Training:
     def load_model(self, file_path):
         with open("./environments/" + file_path, 'r') as infile:
             json_string = infile.read()
-        print(json_string)
+
         deserialized_environment_dict = json.loads(json_string)
         room_number = deserialized_environment_dict["roomNumber"]
 

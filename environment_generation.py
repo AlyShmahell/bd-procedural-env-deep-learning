@@ -63,15 +63,15 @@ class Environment_Generation:
                 self.screen.blit(room.door.sprite.image, blitRect)
                 room.door.sprite.rect = blitRect
 
-            for roomChild in room.children:
-                self.screen.blit(roomChild.sprite.image, roomChild.sprite.rect)
-                for child in roomChild.children:
+            for room_child in room.children:
+                self.screen.blit(room_child.sprite.image, room_child.sprite.rect)
+                for child in room_child.children:
                     self.screen.blit(child.sprite.image, child.sprite.rect)
         if self.agent.targetRot - self.agent.rot != 0:
             self.agent.image = pygame.transform.rotate(self.agent.sprite.image, self.agent.targetRot - 90)
-            oldCenter = self.agent.sprite.rect.center
+            old_center = self.agent.sprite.rect.center
             self.agent.sprite.rect = self.agent.image.get_rect()
-            self.agent.sprite.rect.center = oldCenter
+            self.agent.sprite.rect.center = old_center
             self.agent.rot = self.agent.targetRot
         self.agent.sprite.rect.x = self.agent.x
         self.agent.sprite.rect.y = self.agent.y
@@ -225,40 +225,7 @@ class Environment_Generation:
         self.env_width = self.env_width + (8.0 * room_number * self.multiplier)
         self.env_height = self.env_height + (8.0 * room_number * self.multiplier)
         self.screen = pygame.display.set_mode((int(self.env_width), int(self.env_height)))
-        self.type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),
-                                   kitchen=pygame.image.load('textures/kitchen_texture.png').convert_alpha(),
-                                   bedroom=pygame.image.load('textures/bedroom_texture.png').convert_alpha(),
-                                   bathroom=pygame.image.load('textures/bathroom_texture.png').convert_alpha(),
-                                   door=pygame.image.load('textures/door_texture.png').convert_alpha(),
-                                   toilet=pygame.image.load('textures/toilet_texture.png').convert_alpha(),
-                                   shower=pygame.image.load('textures/shower_texture.png').convert_alpha(),
-                                   bed=pygame.image.load('textures/green_bed_texture.png').convert_alpha(),
-                                   bedside=pygame.image.load('textures/bedside_texture.png').convert_alpha(),
-                                   sofa=pygame.image.load('textures/sofa_texture.png').convert_alpha(),
-                                   hall_table=pygame.image.load('textures/hall_table_texture.png').convert_alpha(),
-                                   table=pygame.image.load('textures/table_texture.png').convert_alpha(),
-                                   chair=pygame.image.load('textures/chair_texture.png').convert_alpha(),
-                                   desk=pygame.image.load('textures/desk_texture.png').convert_alpha(),
-                                   sink=pygame.image.load('textures/sink_texture.png').convert_alpha(),
-                                   wardrobe=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
-                                   cupboard=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
-                                   floor=pygame.image.load('textures/floor_texture.png').convert_alpha(),
-                                   agent=pygame.image.load('textures/agent_texture_mockup.png').convert_alpha(),
-                                   objective=pygame.image.load('textures/objective_texture_mockup.png').convert_alpha())
-
-        agent_sprite = pygame.sprite.Sprite()
-        agent_sprite.image = pygame.transform.scale(self.type_to_sprite['agent'],
-                                                    (int(self.agent.width), int(self.agent.height)))
-        agent_sprite.rect = pygame.Rect(self.agent.x, self.agent.y, self.agent.width, self.agent.height)
-        self.agent.sprite = agent_sprite
-        self.agent.image = self.agent.sprite.image
-
-        objective_sprite = pygame.sprite.Sprite()
-        objective_sprite.image = pygame.transform.scale(self.type_to_sprite['objective'],
-                                                        (int(self.objective.width), int(self.objective.height)))
-        objective_sprite.rect = pygame.Rect(self.objective.x, self.objective.y, self.objective.width,
-                                            self.objective.height)
-        self.objective.sprite = objective_sprite
+        self.makes_sprites()
 
         head_variables = ""
         predicate_head = "generateEnvironment(EnvWidth, EnvHeight, "
@@ -516,6 +483,40 @@ class Environment_Generation:
                 room.door = Game_Object(door_x, room.y, 2.5 * self.multiplier, 0, door_sprite, 'door')
 
         return rooms
+
+    def makes_sprites(self):
+        self.type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),
+                                   kitchen=pygame.image.load('textures/kitchen_texture.png').convert_alpha(),
+                                   bedroom=pygame.image.load('textures/bedroom_texture.png').convert_alpha(),
+                                   bathroom=pygame.image.load('textures/bathroom_texture.png').convert_alpha(),
+                                   door=pygame.image.load('textures/door_texture.png').convert_alpha(),
+                                   toilet=pygame.image.load('textures/toilet_texture.png').convert_alpha(),
+                                   shower=pygame.image.load('textures/shower_texture.png').convert_alpha(),
+                                   bed=pygame.image.load('textures/green_bed_texture.png').convert_alpha(),
+                                   bedside=pygame.image.load('textures/bedside_texture.png').convert_alpha(),
+                                   sofa=pygame.image.load('textures/sofa_texture.png').convert_alpha(),
+                                   hall_table=pygame.image.load('textures/hall_table_texture.png').convert_alpha(),
+                                   table=pygame.image.load('textures/table_texture.png').convert_alpha(),
+                                   chair=pygame.image.load('textures/chair_texture.png').convert_alpha(),
+                                   desk=pygame.image.load('textures/desk_texture.png').convert_alpha(),
+                                   sink=pygame.image.load('textures/sink_texture.png').convert_alpha(),
+                                   wardrobe=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
+                                   cupboard=pygame.image.load('textures/wardrobe_texture.png').convert_alpha(),
+                                   floor=pygame.image.load('textures/floor_texture.png').convert_alpha(),
+                                   agent=pygame.image.load('textures/agent_texture_mockup.png').convert_alpha(),
+                                   objective=pygame.image.load('textures/objective_texture_mockup.png').convert_alpha())
+        agent_sprite = pygame.sprite.Sprite()
+        agent_sprite.image = pygame.transform.scale(self.type_to_sprite['agent'],
+                                                    (int(self.agent.width), int(self.agent.height)))
+        agent_sprite.rect = pygame.Rect(self.agent.x, self.agent.y, self.agent.width, self.agent.height)
+        self.agent.sprite = agent_sprite
+        self.agent.image = self.agent.sprite.image
+        objective_sprite = pygame.sprite.Sprite()
+        objective_sprite.image = pygame.transform.scale(self.type_to_sprite['objective'],
+                                                        (int(self.objective.width), int(self.objective.height)))
+        objective_sprite.rect = pygame.Rect(self.objective.x, self.objective.y, self.objective.width,
+                                            self.objective.height)
+        self.objective.sprite = objective_sprite
 
     def get_rooms(self, flag):
         result = []
