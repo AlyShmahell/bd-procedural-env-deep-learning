@@ -7,12 +7,18 @@ from guizero import App, ListBox, PushButton, Box, Text, info, Slider
 from environment_generation import Environment_Generation
 from os import listdir
 from os.path import isfile, join
+from training import Training
 
 
 class Guizero:
-    """A simple and intuitive interface to create graphical user interfaces (GUIs) """
-    def __init__(self, environment):
-        self.environment = environment
+    """A simple and intuitive interface to create graphical user interfaces (GUIs)
+    prova"""
+
+    def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
+        self.listbox = None
+        self._environment = Environment_Generation(env_width, env_height, multiplier, fake_collision_mt,
+                                                   door_fake_collision_mt)
+        self.training = Training(env_width, env_height, multiplier, self._environment)
         self.green = (0, 255, 0)
         self.orange = (255, 200, 140)
         self.pink = (255, 210, 210)
@@ -24,7 +30,7 @@ class Guizero:
         Box(self.menu_box, height=50, width=800, grid=[0, 0])
         Box(self.menu_box, height=20, width=800, grid=[0, 2])
         Box(self.menu_box, height=20, width=800, grid=[0, 4])
-        PushButton(self.menu_box, command=self.sight_environments_cmd, text="Visualize generated environments",
+        PushButton(self.menu_box, command=self.view_generated_envs, text="Visualize generated environments",
                    width=40,
                    height=1, grid=[0, 1])
         PushButton(self.menu_box, command=self.go_to_sight_generation_cmd, text="Generate new environments", width=30,
@@ -32,8 +38,7 @@ class Guizero:
         PushButton(self.menu_box, command=self.train_agent_cmd, text="Train the Agent", width=30, height=1, grid=[0, 5])
 
         self.env_view_box = Box(self.app, visible=False, layout="grid")
-        env_files = [f for f in listdir("./environments") if isfile(join("./environments", f))]
-        self.listbox = ListBox(self.env_view_box, items=env_files, scrollbar=True, width=350, height=350, grid=[0, 1])
+        self.update_files()
 
         Box(self.env_view_box, height=40, width=50, grid=[0, 0])
         view_button_box = Box(self.env_view_box, height=40, width=300, layout="grid", grid=[0, 2])
@@ -103,12 +108,17 @@ class Guizero:
 
         Box(self.train_box_view, height=40, width=50, grid=[0, 0])
         view_button_box2 = Box(self.train_box_view, layout="grid", grid=[0, 2])
-        # PushButton(view_button_box2, command=self.train_cmd, text="Train", grid=[0, 0])
+        PushButton(view_button_box2, command=self.train_cmd, text="Train", grid=[0, 0])
         PushButton(view_button_box2, command=self.view_train_back_cmd, text="Back", grid=[1, 0])
 
         self.app.display()
 
-    def sight_environments_cmd(self):
+    def update_files(self):
+        env_files = [f for f in listdir("./environments") if isfile(join("./environments", f))]
+        self.listbox = ListBox(self.env_view_box, items=env_files, scrollbar=True, width=350, height=350, grid=[0, 1])
+
+    def view_generated_envs(self):
+        self.update_files()
         self.menu_box.hide()
         self.env_view_box.show()
 
@@ -124,10 +134,16 @@ class Guizero:
         self.train_box_view.show()
 
     def view_cmd(self):
-        self.environment.loadModel(self.listbox.value)
-        self.environment.draw_model()
-        self.environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
-                                             self.sliderHA.value)
+        self.training.load_model(self.listbox.value)
+        self._environment._rooms = self.training._rooms
+        self._environment._agent = self.training._agent
+        self._environment._objective = self.training._objective
+        self._environment._floor = self.training._floor
+        self._environment._screen = self.training._screen
+
+        # self._environment.draw_model()
+        self._environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
+                                               self.sliderHA.value)
 
     def view_env_back_cmd(self):
         self.env_view_box.hide()
@@ -142,18 +158,18 @@ class Guizero:
 
     def generate_cmd(self):
         info("Use the Generator",
-             "- During the environments generation, press key 'S' to save an environment and generate the next."
-             "\n\n- Press key 'N' to generate a new environment discarding the previous."
+             "- During the environments generation, press key 'S' to save an _environment and generate the next."
+             "\n\n- Press key 'N' to generate a new _environment discarding the previous."
              "\n\n- Close PyGame to comeback to the menu.")
-        self.environment.generate_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
-                                              self.sliderHA.value)
-        self.environment.draw_model()
-        self.environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
-                                             self.sliderHA.value, mode="generate")
+        self._environment.generate_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
+                                               self.sliderHA.value)
+        self._environment.draw_model()
+        self._environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
+                                              self.sliderHA.value, mode="generate")
 
-    # def train_cmd(self):
-    #     self.environment.loadModel(self.listbox2.value)
-    #     self.environment.runTraining()
+    def train_cmd(self):
+        self.training.load_model(self.listbox2.value)
+        self.training.run_training()
 
     def view_train_back_cmd(self):
         self.train_box_view.hide()
@@ -161,5 +177,5 @@ class Guizero:
 
 
 if __name__ == "__main__":
-    my_env = Environment_Generation(15.0, 15.0, 8.5, 2.5, 1.5)
-    Guizero(my_env)
+    # my_env = Environment_Generation(15.0, 15.0, 8.5, 2.5, 1.5)
+    Guizero(15.0, 15.0, 8.5, 2.5, 1.5)
