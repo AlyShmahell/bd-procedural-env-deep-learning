@@ -26,20 +26,29 @@ class Guizero:
         self.light_green = (150, 255, 150)
 
         self.app = App(title="Procedural Environment Neuro-symbolic Agent", width=800, height=600)
-        self.menu_box = Box(self.app, layout="grid", width=800, height=250)
+        self.menu_box = Box(self.app, layout="grid", width=800, height=260)
         Box(self.menu_box, height=50, width=800, grid=[0, 0])
         Box(self.menu_box, height=20, width=800, grid=[0, 2])
         Box(self.menu_box, height=20, width=800, grid=[0, 4])
+        Box(self.menu_box, height=20, width=800, grid=[0, 6])
         PushButton(self.menu_box, command=self.view_generated_envs, text="Visualize generated environments",
                    width=40,
                    height=1, grid=[0, 1])
         PushButton(self.menu_box, command=self.go_to_sight_generation_cmd, text="Generate new environments", width=30,
                    height=1, grid=[0, 3])
         PushButton(self.menu_box, command=self.train_agent_cmd, text="Train the Agent", width=30, height=1, grid=[0, 5])
-
+        
+        ###GPU###
+        PushButton(self.menu_box, command=self.view_gpus, text="Check GPU Availability",
+                   width=30,
+                   height=1, grid=[0, 7])
+        self.gpu_view_box = Box(self.app, visible=False, layout="grid")
+        Box(self.gpu_view_box, height=40, width=50, grid=[0, 0])
+        gpu_button_box = Box(self.gpu_view_box, height=40, width=300, layout="grid", grid=[0, 2])
+        PushButton(gpu_button_box, command=self.view_gpu_back_cmd, text="Back", grid=[1, 0])
+        #########
+        
         self.env_view_box = Box(self.app, visible=False, layout="grid")
-        self.update_files()
-
         Box(self.env_view_box, height=40, width=50, grid=[0, 0])
         view_button_box = Box(self.env_view_box, height=40, width=300, layout="grid", grid=[0, 2])
         PushButton(view_button_box, command=self.view_cmd, text="Visualize", grid=[0, 0])
@@ -116,6 +125,8 @@ class Guizero:
     def update_files(self):
         env_files = [f for f in listdir("./environments") if isfile(join("./environments", f))]
         self.listbox = ListBox(self.env_view_box, items=env_files, scrollbar=True, width=350, height=350, grid=[0, 1])
+        self.listbox2 = ListBox(self.train_box_view, items=env_files, scrollbar=True, width=350, height=350,
+                                grid=[0, 1])
 
     def view_generated_envs(self):
         self.update_files()
@@ -130,6 +141,7 @@ class Guizero:
         self.generation_env_button.show()
 
     def train_agent_cmd(self):
+        self.update_files()
         self.menu_box.hide()
         self.train_box_view.show()
 
@@ -174,8 +186,24 @@ class Guizero:
     def view_train_back_cmd(self):
         self.train_box_view.hide()
         self.menu_box.show()
-
-
+        
+    ###GPU###
+    def view_gpus(self):
+        try:
+            import tensorflow as tf
+            gpus = [str(x) for x in tf.config.list_physical_devices('GPU')]
+        except:
+            gpus = []
+        self.listbox_gpu = ListBox(self.gpu_view_box, items=gpus, scrollbar=True, width=350, height=350, grid=[0, 1])
+        self.menu_box.hide()
+        self.gpu_view_box.show()
+    #########
+    ###GPU###
+    def view_gpu_back_cmd(self):
+        self.gpu_view_box.hide()
+        self.menu_box.show()
+    #########
+        
 if __name__ == "__main__":
     # my_env = Environment_Generation(15.0, 15.0, 8.5, 2.5, 1.5)
     Guizero(15.0, 15.0, 8.5, 2.5, 1.5)
