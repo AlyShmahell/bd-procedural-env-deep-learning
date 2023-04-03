@@ -1,6 +1,10 @@
 import math
 import numpy as np
 
+class ExitException(Exception):
+    def __init__(self, message, errors):            
+        super().__init__(message)
+        self.errors = errors
 
 class Vertex:
     def __init__(self, x, y):

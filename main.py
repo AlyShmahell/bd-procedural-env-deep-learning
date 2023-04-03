@@ -3,7 +3,7 @@
     https://github.com/AAAI-DISIM-UnivAQ/bd-procedural-env-deep-learning
 """
 
-from guizero import App, ListBox, PushButton, Box, Text, info, Slider
+from guizero import App, ListBox, PushButton, Box, Text, info, Slider, CheckBox
 from environment_generation import Environment_Generation
 from os import listdir
 from os.path import isfile, join
@@ -15,6 +15,9 @@ class Guizero:
     prova"""
 
     def __init__(self, env_width, env_height, multiplier, fake_collision_mt, door_fake_collision_mt):
+        self._env_width = env_width
+        self._env_height = env_height
+        self._multiplier = multiplier
         self.listbox = None
         self._environment = Environment_Generation(env_width, env_height, multiplier, fake_collision_mt,
                                                    door_fake_collision_mt)
@@ -111,9 +114,11 @@ class Guizero:
         PushButton(self.generation_env_button, command=self.view_generation_back_cmd, text="Back", grid=[1, 0])
 
         self.train_box_view = Box(self.app, visible=False, layout="grid")
-        env_files = [f for f in listdir("./environments") if isfile(join("./environments", f))]
+        env_files = [f for f in listdir("./environments") if isfile(join("./environments", f)) and f!="null"]
+        env_files = sorted(env_files)
         self.listbox2 = ListBox(self.train_box_view, items=env_files, scrollbar=True, width=350, height=350,
                                 grid=[0, 1])
+        self.render_on = CheckBox(self.train_box_view, text="Render On", grid=[0,3])
 
         Box(self.train_box_view, height=40, width=50, grid=[0, 0])
         view_button_box2 = Box(self.train_box_view, layout="grid", grid=[0, 2])
@@ -123,7 +128,8 @@ class Guizero:
         self.app.display()
 
     def update_files(self):
-        env_files = [f for f in listdir("./environments") if isfile(join("./environments", f))]
+        env_files = [f for f in listdir("./environments") if isfile(join("./environments", f)) and f!="null"]
+        env_files = sorted(env_files)
         self.listbox = ListBox(self.env_view_box, items=env_files, scrollbar=True, width=350, height=350, grid=[0, 1])
         self.listbox2 = ListBox(self.train_box_view, items=env_files, scrollbar=True, width=350, height=350,
                                 grid=[0, 1])
@@ -147,11 +153,17 @@ class Guizero:
 
     def view_cmd(self):
         self.training.load_model(self.listbox.value)
+        self.training._env_width = self._env_width
+        self.training._env_height = self._env_height
+        self.training._multiplier = self._multiplier
         self._environment._rooms = self.training._rooms
         self._environment._agent = self.training._agent
         self._environment._objective = self.training._objective
         self._environment._floor = self.training._floor
         self._environment._screen = self.training._screen
+        self._environment._env_width = self._env_width
+        self._environment._env_height = self._env_height
+        self._environment._multiplier = self._multiplier
 
         # self._environment.draw_model()
         self._environment.display_environment(self.sliderBAR.value, self.sliderBR.value, self.sliderKI.value,
@@ -181,7 +193,8 @@ class Guizero:
 
     def train_cmd(self):
         self.training.load_model(self.listbox2.value)
-        self.training.run_training()
+        self.training.run_training(self.render_on.value)
+        
 
     def view_train_back_cmd(self):
         self.train_box_view.hide()
@@ -191,7 +204,8 @@ class Guizero:
     def view_gpus(self):
         try:
             import tensorflow as tf
-            gpus = [str(x) for x in tf.config.list_physical_devices('GPU')]
+            gpus = [f"{tf.config.experimental.get_device_details(gpu).get('device_name', 'unknown')} {gpu.name}"
+                    for gpu in tf.config.list_physical_devices('GPU')]
         except:
             gpus = []
         self.listbox_gpu = ListBox(self.gpu_view_box, items=gpus, scrollbar=True, width=350, height=350, grid=[0, 1])

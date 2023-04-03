@@ -4,7 +4,7 @@ import numpy as np
 import pygame
 
 from SLAMRobot import SLAMAgent
-from utils import Check_Collisions, Game_Object, Room, Agent
+from utils import Check_Collisions, Game_Object, Room, Agent, ExitException
 
 
 class Training:
@@ -24,7 +24,7 @@ class Training:
         self._is_agent_looking = False
         self._floor = None
 
-    def run_training(self):
+    def run_training(self, render_on=False):
         state_size = 40
         slam_agent = SLAMAgent(state_size, 3)
         speed = 2
@@ -46,12 +46,14 @@ class Training:
             score = 0
 
             while not done:
-
                 for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_s:
                             slam_agent.save("test")
-                render_on = True
+                    if event.type == pygame.QUIT:
+                        pygame.display.quit()
+                        pygame.quit()
+                        return
                 if render_on:
                     frame_count += 1
                     if frame_count == frames:
@@ -156,9 +158,14 @@ class Training:
             print("Episode {}/{}: end at frame {}/{}, score: {}, random: {}%".format(i, 10000, frame_count, frames,
                                                                                      score, int((
                                                                                                             random_actions * 100) / frame_count)))
+            
             print("Start _agent replay.")
-            slam_agent.replay(500)
-            print("Agent replay completed.")
+            try:
+                slam_agent.replay(500)
+                print("Agent replay completed.")
+            except ExitException as e:
+                print(e)
+                return
 
         print("Weights saving...")
         slam_agent.save("test")
@@ -209,12 +216,13 @@ class Training:
 
         deserialized_environment_dict = json.loads(json_string)
         room_number = deserialized_environment_dict["roomNumber"]
-
-        self._env_width = self._env_width + (8.5 * room_number * self._multiplier)
-        self._env_height = self._env_height + (8.5 * room_number * self._multiplier)
+        floor_dict = deserialized_environment_dict["floor"]
+        
+        self._env_width = floor_dict["width"] + (8 * room_number * self._multiplier)
+        self._env_height = floor_dict["height"] + (8 * room_number * self._multiplier)
 
         self._screen = pygame.display.set_mode((int(self._env_width), int(self._env_height)))
-
+        self._rooms = []
         self._type_to_sprite = dict(hall=pygame.image.load('textures/hall_texture.png').convert_alpha(),
                                     kitchen=pygame.image.load('textures/kitchen_texture.png').convert_alpha(),
                                     bedroom=pygame.image.load('textures/bedroom_texture.png').convert_alpha(),
@@ -236,7 +244,6 @@ class Training:
                                     agent=pygame.image.load('textures/agent_texture_mockup.png').convert_alpha(),
                                     objective=pygame.image.load('textures/objective_texture_mockup.png').convert_alpha())
 
-        floor_dict = deserialized_environment_dict["floor"]
         floor_sprite = pygame.sprite.Sprite()
         floor_sprite.image = pygame.transform.scale(self._type_to_sprite['floor'],
                                                     (int(floor_dict["width"]), int(floor_dict["height"])))
@@ -314,3 +321,4 @@ class Training:
         objective_sprite.rect = pygame.Rect(self._objective.x, self._objective.y, self._objective.width,
                                             self._objective.height)
         self._objective.sprite = objective_sprite
+        self.multiplier = 1.0

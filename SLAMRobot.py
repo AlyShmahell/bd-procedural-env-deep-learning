@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 from collections import deque
 import random
+import pygame
+from utils import ExitException
 
 class SLAMAgent:
     def __init__(self, state_size, action_size):
@@ -69,6 +71,12 @@ class SLAMAgent:
             minibatch.extend(random.sample(self.memory, len(self.memory) - len(minibatch)))
 
         for state, action, reward, next_state, done in minibatch:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.display.quit()
+                    pygame.quit()
+                    raise ExitException("User quit while replaying/fitting", None)
+                    return
             target = reward
             if not done:
                 target = (reward + self.gamma *
