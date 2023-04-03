@@ -119,6 +119,7 @@ class Guizero:
         self.listbox2 = ListBox(self.train_box_view, items=env_files, scrollbar=True, width=350, height=350,
                                 grid=[0, 1])
         self.render_on = CheckBox(self.train_box_view, text="Render On", grid=[0,3])
+        self.render_on.toggle()
 
         Box(self.train_box_view, height=40, width=50, grid=[0, 0])
         view_button_box2 = Box(self.train_box_view, layout="grid", grid=[0, 2])

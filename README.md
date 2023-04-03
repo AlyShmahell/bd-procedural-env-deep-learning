@@ -30,13 +30,22 @@ objectives, one could attempt to train it in a set of 20-30 environments (switch
 performing the same task on a new one which it has never seen before.
 
 ### Installation
-Please make sure these dependencies are installed first:
-- Keras
-- Pyswip (so the latest version of SWI-Prolog as well)
-- Pygame
-- Guizero
-- Numpy
-
-Then clone our repo and simply run Main.py.
-
-For a quick glance at what an environment looks like Prolog wise, JSON wise and graphically, please see the example1 in the environments folder.
+- clone the repo
+- start a terminal inside the cloned directory
+- ` curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o Miniconda3-latest-Linux-x86_64.sh `
+- ` bash Miniconda3-latest-Linux-x86_64.sh `
+- ` conda create --name tf python=3.9 `
+- ` conda deactivate `
+- **Restart the terminal**
+- ` conda activate tf  `
+- ` conda install -c conda-forge cudatoolkit=11.8.0 `
+- ` pip install nvidia-cudnn-cu11==8.6.0.163 `
+- ` CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)")) `
+- ` export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib `
+- ` mkdir -p $CONDA_PREFIX/etc/conda/activate.d `
+- ` echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh `
+- ` pip install --upgrade pip `
+- ` pip install tensorflow==2.12.* `
+- ` python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" `
+- ` rm -rf Miniconda3-latest-Linux-x86_64.sh `
+- ` pip install -r requirements.txt `
