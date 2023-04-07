@@ -30,10 +30,8 @@ objectives, one could attempt to train it in a set of 20-30 environments (switch
 performing the same task on a new one which it has never seen before.
 
 ### Installation
-- make sure you have clean python paths, taking care of the `.local` directory as well.
-- make sure you do not have conflicting conda installations.
-- clone the repo.
-- start a terminal inside the cloned directory.
+- clone the repo
+- start a terminal inside the cloned directory
 - ` curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o Miniconda3-latest-Linux-x86_64.sh `
 - ` bash Miniconda3-latest-Linux-x86_64.sh `
 - ` conda create --name tf python=3.9 `
