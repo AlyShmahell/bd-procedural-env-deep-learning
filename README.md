@@ -31,6 +31,7 @@ performing the same task on a new one which it has never seen before.
 
 ### Installation
 - make sure you have clean python paths, taking care of the `.local` directory as well.
+- make sure to delete all `__pycache__` and other temporary files from your project.
 - make sure you do not have conflicting conda installations.
 - clone the repo.
 - start a terminal inside the cloned directory.
@@ -45,6 +46,7 @@ performing the same task on a new one which it has never seen before.
 - ` CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)")) `
 - ` export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib `
 - ` mkdir -p $CONDA_PREFIX/etc/conda/activate.d `
+- ` echo 'CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh`
 - ` echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh `
 - ` pip install --upgrade pip `
 - ` pip install tensorflow==2.12.* `
